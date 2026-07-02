@@ -1,0 +1,16 @@
+.card:hover {
+  transform: scale(1.03);
+  transition: 0.2s ease;
+}
+
+.sidebar-item {
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: 0.2s ease;
+}
+
+.sidebar-item:hover {
+  background: #1a1a1a;
+  color: #1db954;
+  transform: translateX(3px);
+}

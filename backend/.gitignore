@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+
+# env
+.env
+
+# logs
+logs/
+*.log
+
+# runtime
+dist/
+build/
+
+# coverage
+coverage/
+
+# uploads or temp files (if any)
+uploads/
+tmp/
