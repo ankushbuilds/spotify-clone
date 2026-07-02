@@ -72,7 +72,9 @@ const Player = ({
     const audio = audioRef?.current;
     if (!audio || !currentSong) return;
 
-    audio.src = currentSong.src;
+    audio.src = currentSong.uri || currentSong.src || "";
+    if (!audio.src) return;
+
     audio.play();
     setIsPlaying(true);
   }, [currentSong]);
@@ -89,7 +91,10 @@ const Player = ({
       {/* LEFT */}
       <div className="d-flex align-items-center gap-3" style={{ width: "30%" }}>
         <img
-          src={currentSong?.image || "https://via.placeholder.com/60"}
+          src={
+            currentSong?.image ||
+            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Crect width='60' height='60' fill='%23222'/%3E%3Ctext x='50%25' y='50%25' fill='%23fff' font-size='10' font-family='Arial,sans-serif' text-anchor='middle' dy='.3em'%3ENo%20Img%3C/text%3E%3C/svg%3E"
+          }
           alt="song"
           style={{
             width: "55px",

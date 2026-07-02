@@ -6,8 +6,6 @@ const jwt = require('jsonwebtoken')
 
 // Create a new music
 async function createMusic(req, res) {
-    const token = req.cookies.token;
-
     const { title } = req.body;
     const file = req.file;
 
@@ -17,7 +15,7 @@ async function createMusic(req, res) {
         uri: result.url,
         title,
         artist: req.user.id
-    })
+    });
 
     res.status(201).json({
         message: "Music created Successfully",
@@ -27,36 +25,29 @@ async function createMusic(req, res) {
             uri: music.uri,
             artist: req.user.id
         }
-    })
-
+    });
 }
 
 
 // Create a new Album
 async function createAlbum(req, res) {
-    const token = req.cookies.token;
-
-    if (!token) {
-        return res.status(401).json({
-            message: "Unauthorized"
-        })
-    }
-
     const { title, musics } = req.body;
+
     const album = await albumModel.create({
         title,
-        artist: req.user.id, // Assuming req.user.id contains the artist's ID
+        artist: req.user.id,
         musics: musics
-    })
+    });
+
     res.status(201).json({
         message: "Album created successfully",
         album: {
             id: album._id,
             title: album.title,
-            artist: req.user.id, // Assuming req.user.id contains the artist's ID
+            artist: req.user.id,
             musics: album.musics
         }
-    })
+    });
 }
 
 // Get all musics

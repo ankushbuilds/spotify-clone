@@ -3,14 +3,17 @@ import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Player from "./components/Player";
 import Home from "./pages/Home";
+import Login from "./pages/Login";
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
   const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(() => {
+    const token = localStorage.getItem("token");
+    return Boolean(token && token !== "undefined" && token !== "null");
+  });
 
-  // 🔥 IMPORTANT FIX
   const audioRef = useRef(new Audio());
 
   const toggleSidebar = () => {
@@ -27,11 +30,19 @@ function App() {
         <Sidebar isOpen={isSidebarOpen} />
 
         <div className="flex-grow-1 p-4 overflow-auto bg-black">
-          <Home
-            setCurrentSong={setCurrentSong}
-            setIsPlaying={setIsPlaying}
-            audioRef={audioRef}   // 🔥 ADD THIS
-          />
+          {loggedIn ? (
+            <Home
+              setCurrentSong={setCurrentSong}
+              setIsPlaying={setIsPlaying}
+              audioRef={audioRef}
+              onUnauthenticated={() => {
+                localStorage.removeItem("token");
+                setLoggedIn(false);
+              }}
+            />
+          ) : (
+            <Login onLoginSuccess={() => setLoggedIn(true)} />
+          )}
         </div>
 
       </div>

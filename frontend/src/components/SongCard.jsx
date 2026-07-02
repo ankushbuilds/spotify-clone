@@ -111,7 +111,7 @@ const SongCard = ({ song, onPlay, onLike }) => {
         </div>
 
         <p style={{ margin: 0, fontSize: "12px", color: "#b3b3b3" }}>
-          {song.artist}
+          {song.artist?.username || song.artist || "Unknown artist"}
         </p>
       </div>
     </div>

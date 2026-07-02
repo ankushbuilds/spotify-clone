@@ -1,28 +1,38 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import apiClient from "../api/axiosClient";
 import SongCard from "../components/SongCard";
 
-const Home = ({ setCurrentSong, setIsPlaying, audioRef }) => {
+const Home = ({ setCurrentSong, setIsPlaying, audioRef, onUnauthenticated }) => {
   const [songs, setSongs] = useState([]);
+  const [error, setError] = useState("");
+  const token = localStorage.getItem("token");
 
-  // 🔥 FETCH FROM BACKEND (FIXED)
   useEffect(() => {
-    axios
-      .get("http://localhost:3000/api/music/songs", {
-        withCredentials: true, // ✅ IMPORTANT FIX
-      })
+    if (!token) {
+      setError("Please log in to view songs.");
+      return;
+    }
+
+    apiClient
+      .get("/music/songs")
       .then((res) => {
         console.log("SUCCESS:", res.status);
         console.log(res.data);
         setSongs(res.data.musics);
       })
       .catch((err) => {
+        if (err.response?.status === 401) {
+          onUnauthenticated?.();
+          setError("Session expired. Please log in again.");
+          return;
+        }
+
+        setError(err.response?.data?.message || "Error fetching songs.");
         console.log("STATUS:", err.response?.status);
         console.log("DATA:", err.response?.data);
         console.log("URL:", err.config?.url);
-        console.log("Error fetching songs:", err.response?.data || err.message);
       });
-  }, []);
+  }, [token]);
 
   // 🎧 PLAY SONG
   const handlePlay = (song) => {
@@ -45,6 +55,12 @@ const Home = ({ setCurrentSong, setIsPlaying, audioRef }) => {
     <div>
       <h2>🎧 Welcome to Spotify Clone</h2>
 
+      {error ? (
+        <div className="alert alert-warning mt-3" role="alert">
+          {error}
+        </div>
+      ) : null}
+
       <div className="row mt-3">
         {songs.length > 0 ? (
           songs.map((song) => (
@@ -53,7 +69,7 @@ const Home = ({ setCurrentSong, setIsPlaying, audioRef }) => {
             </div>
           ))
         ) : (
-          <p className="text-light">Loading songs...</p>
+          !error && <p className="text-light">Loading songs...</p>
         )}
       </div>
     </div>

@@ -2,14 +2,6 @@ const userModel = require('../models/user.model');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const COOKIE_OPTIONS = {
-    httpOnly: true,
-    secure: false,        // dev mode (production me true karna)
-    sameSite: "lax",
-    path: "/",
-    maxAge: 7 * 24 * 60 * 60 * 1000
-};
-
 // =======================
 // REGISTER USER
 // =======================
@@ -35,15 +27,6 @@ async function registerUser(req, res) {
             password: hashedPassword,
             role
         });
-
-        const token = jwt.sign(
-            { id: user._id, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: "7d" }
-        );
-
-        // ✅ COOKIE FIXED
-        res.cookie("token", token, COOKIE_OPTIONS);
 
         return res.status(201).json({
             message: "User registered successfully",
@@ -92,11 +75,9 @@ async function loginUser(req, res) {
             { expiresIn: "7d" }
         );
 
-        // ✅ COOKIE FIXED
-        res.cookie("token", token, COOKIE_OPTIONS);
-
         return res.status(200).json({
             message: "Login successful",
+            token,
             user: {
                 id: user._id,
                 username: user.username,
@@ -116,8 +97,6 @@ async function loginUser(req, res) {
 // =======================
 async function logoutUser(req, res) {
     try {
-        res.clearCookie("token", COOKIE_OPTIONS);
-
         return res.status(200).json({
             message: "Logged out successfully"
         });
