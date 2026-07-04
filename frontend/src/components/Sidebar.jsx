@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaHome,
   FaSearch,
@@ -8,78 +9,60 @@ import {
 } from "react-icons/fa";
 
 const Sidebar = ({ isOpen }) => {
+  const navigate = useNavigate();
+
   const [active, setActive] = useState("Home");
 
   const menuItems = [
-    { name: "Home", icon: <FaHome /> },
-    { name: "Search", icon: <FaSearch /> },
-    { name: "Library", icon: <FaBook /> },
-    { name: "Liked Songs", icon: <FaHeart /> },
+    {
+      name: "Home",
+      icon: <FaHome />,
+      path: "/",
+    },
+    {
+      name: "Search",
+      icon: <FaSearch />,
+      path: "/search",
+    },
+    {
+      name: "Library",
+      icon: <FaBook />,
+      path: "/library",
+    },
+    {
+      name: "Liked Songs",
+      icon: <FaHeart />,
+      path: "/liked",
+    },
   ];
 
-  return (
-    <div
-      style={{
-        width: isOpen ? "240px" : "70px",
-        minWidth: isOpen ? "240px" : "70px",
-        transition: "0.3s ease",
-        background: "#000",
-        color: "white",
-        borderRight: "1px solid #222",
-        padding: "15px",
-      }}
-    >
-      {/* LOGO */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-          marginBottom: "25px",
-        }}
-      >
-        <FaSpotify style={{ color: "#1db954", fontSize: "24px" }} />
+  const handleClick = (item) => {
+    setActive(item.name);
+    navigate(item.path);
+  };
 
-        {isOpen && (
-          <span style={{ fontWeight: "600", fontSize: "16px" }}>
-            Spotify
-          </span>
-        )}
+  return (
+    <div className={`sidebar ${isOpen ? "open" : "closed"}`}>
+      {/* LOGO */}
+      <div className="sidebar-logo">
+        <FaSpotify className="spotify-icon" />
+        {isOpen && <span className="sidebar-title">Spotify</span>}
       </div>
 
       {/* MENU */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      <div className="sidebar-menu">
         {menuItems.map((item) => (
           <div
             key={item.name}
-            onClick={() => setActive(item.name)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "10px",
-              borderRadius: "8px",
-              cursor: "pointer",
-              transition: "0.2s",
-              background:
-                active === item.name ? "#1a1a1a" : "transparent",
-              color: active === item.name ? "#1db954" : "#b3b3b3",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = "#1a1a1a")
-            }
-            onMouseLeave={(e) => {
-              if (active !== item.name) {
-                e.currentTarget.style.background = "transparent";
-              }
-            }}
+            className={`menu-item ${
+              active === item.name ? "active" : ""
+            }`}
+            onClick={() => handleClick(item)}
           >
-            <span style={{ fontSize: "18px" }}>{item.icon}</span>
+            <span className="menu-icon">{item.icon}</span>
 
             {isOpen && (
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                {item.name}
-              </span>
+              <span className="menu-text">{item.name}</span>
             )}
           </div>
         ))}

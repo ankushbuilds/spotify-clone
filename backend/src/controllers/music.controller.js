@@ -52,14 +52,16 @@ async function createAlbum(req, res) {
 
 // Get all musics
 async function getAllMusics(req, res) {
-    console.log("get all music passed");
-    const musics = await musicModel.find().limit(2).populate("artist", "username email");
-    console.log("Musics: ", musics)
+    const musics = await musicModel
+        .find({})
+        .limit(20)
+        .populate("artist", "username email");
+
     res.status(200).json({
         success: true,
         message: "All musics fetched successfully",
-        musics: musics
-    })
+        musics
+    });
 }
 
 // Get all albums

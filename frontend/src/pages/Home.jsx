@@ -2,45 +2,67 @@ import { useEffect, useState } from "react";
 import apiClient from "../api/axiosClient";
 import SongCard from "../components/SongCard";
 
-const Home = ({ setCurrentSong, setIsPlaying, audioRef, onUnauthenticated }) => {
+const Home = ({
+  setCurrentSong,
+  setIsPlaying,
+  audioRef,
+  onUnauthenticated,
+  handleLike,
+}) => {
   const [songs, setSongs] = useState([]);
   const [error, setError] = useState("");
-  const token = localStorage.getItem("token");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) {
-      setError("Please log in to view songs.");
-      return;
-    }
+    const fetchSongs = async () => {
+      const token = localStorage.getItem("token");
 
-    apiClient
-      .get("/music/songs")
-      .then((res) => {
+      if (!token) {
+        setError("Please log in to view songs.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const res = await apiClient.get("/music/songs");
+
         console.log("SUCCESS:", res.status);
         console.log(res.data);
-        setSongs(res.data.musics);
-      })
-      .catch((err) => {
+
+        setSongs(res.data.musics || []);
+        setError("");
+      } catch (err) {
         if (err.response?.status === 401) {
           onUnauthenticated?.();
           setError("Session expired. Please log in again.");
-          return;
+        } else {
+          setError(
+            err.response?.data?.message || "Error fetching songs."
+          );
         }
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        setError(err.response?.data?.message || "Error fetching songs.");
-        console.log("STATUS:", err.response?.status);
-        console.log("DATA:", err.response?.data);
-        console.log("URL:", err.config?.url);
-      });
-  }, [token]);
+    fetchSongs();
+  }, [onUnauthenticated]);
 
-  // 🎧 PLAY SONG
+  // PLAY SONG
+  let currentAudio;
+
   const handlePlay = (song) => {
-    const audio = audioRef?.current;
+    if (!song?.uri) return;
 
-    if (!audio || !song?.uri) return;
+    if (currentAudio) {
+      currentAudio.pause();
+    }
+
+    const audio = audioRef.current;
+    currentAudio = audio;
 
     audio.src = song.uri;
+    audio.load();
 
     audio
       .play()
@@ -48,28 +70,41 @@ const Home = ({ setCurrentSong, setIsPlaying, audioRef, onUnauthenticated }) => 
         setCurrentSong(song);
         setIsPlaying(true);
       })
-      .catch((err) => console.log("Play error:", err));
+      .catch(console.log);
   };
 
   return (
     <div>
       <h2>🎧 Welcome to Spotify Clone</h2>
 
-      {error ? (
+      {error && (
         <div className="alert alert-warning mt-3" role="alert">
           {error}
         </div>
-      ) : null}
+      )}
+
+      {loading && !error && (
+        <p className="text-light mt-3">
+          🎧 Loading fresh music for you...
+        </p>
+      )}
 
       <div className="row mt-3">
-        {songs.length > 0 ? (
+        {!loading && songs.length > 0 ? (
           songs.map((song) => (
-            <div className="col-md-3" key={song._id}>
-              <SongCard song={song} onPlay={handlePlay} />
+            <div className="col-md-3 mb-4" key={song._id}>
+              <SongCard
+                song={song}
+                onPlay={handlePlay}
+                onLike={handleLike}
+              />
             </div>
           ))
         ) : (
-          !error && <p className="text-light">Loading songs...</p>
+          !loading &&
+          !error && (
+            <p className="text-light">No songs available.</p>
+          )
         )}
       </div>
     </div>

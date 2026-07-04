@@ -7,6 +7,11 @@ const app = express();
 
 // Middleware
 app.use(express.json());
+// Simple request logger for debugging auth requests
+app.use((req, res, next) => {
+    console.log(`[req] ${req.method} ${req.originalUrl}`);
+    next();
+});
 app.use(cors({
     origin: "http://localhost:5173",
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

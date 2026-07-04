@@ -2,78 +2,97 @@ import { useState } from "react";
 import apiClient from "../api/axiosClient";
 
 const Login = ({ onLoginSuccess }) => {
-  const [formData, setFormData] = useState({ username: "", email: "", password: "" });
+  const [formData, setFormData] = useState({
+    identifier: "",
+    password: "",
+  });
+
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setMessage("");
     setError("");
+    setLoading(true);
 
     try {
       const response = await apiClient.post("/auth/login", {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password
+        username: formData.identifier,
+        email: formData.identifier,
+        password: formData.password,
       });
 
       const { token, user } = response.data;
-      if (!token) {
-        setError("Login response did not return a token.");
-        return;
-      }
 
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
 
-      setMessage("Login successful.");
+      setMessage("Login successful");
       onLoginSuccess?.();
     } catch (err) {
-      localStorage.removeItem("token");
-      setError(err.response?.data?.message || "Login failed.");
+      setError(err.response?.data?.message || "Login failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="login-page">
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Username</label>
-          <input
-            type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-          />
+    <div className="login-container">
+      <div className="login-card">
+
+        <div className="logo">
+          🎵
         </div>
-        <div>
-          <label>Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-          />
-        </div>
-        <div>
-          <label>Password</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-          />
-        </div>
-        <button type="submit">Login</button>
-      </form>
-      {message && <p style={{ color: "green" }}>{message}</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+
+        <h1>Spotify Clone</h1>
+        <p>Log in to continue listening</p>
+
+        <form onSubmit={handleSubmit}>
+
+          <div className="input-group">
+            <label>Email or Username</label>
+            <input
+              type="text"
+              name="identifier"
+              placeholder="Enter email or username"
+              value={formData.identifier}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="input-group">
+            <label>Password</label>
+            <input
+              type="password"
+              name="password"
+              placeholder="Enter password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? "Logging in..." : "Log In"}
+          </button>
+
+        </form>
+
+        {message && <p className="success">{message}</p>}
+        {error && <p className="error">{error}</p>}
+
+      </div>
     </div>
   );
 };

@@ -51,9 +51,13 @@ async function loginUser(req, res) {
     try {
         const { username, email, password } = req.body;
 
+        console.log('[auth.login] incoming body:', { username, email, password: password ? '***' : undefined });
+
         const user = await userModel.findOne({
             $or: [{ username }, { email }]
         });
+
+        console.log('[auth.login] found user:', user ? { id: user._id, username: user.username, email: user.email } : null);
 
         if (!user) {
             return res.status(404).json({
@@ -62,6 +66,7 @@ async function loginUser(req, res) {
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
+        console.log('[auth.login] password valid:', !!isPasswordValid);
 
         if (!isPasswordValid) {
             return res.status(401).json({

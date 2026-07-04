@@ -1,16 +1,760 @@
-.card:hover {
-  transform: scale(1.03);
-  transition: 0.2s ease;
+/* =========================
+   GLOBAL RESET
+========================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
 }
 
-.sidebar-item {
-  padding: 8px 10px;
+body {
+  min-height: 100vh;
+  background: #0a0a0a;
+  color: white;
+}
+
+/* =========================
+   BACKGROUND (optional login/landing glow)
+========================= */
+.login-container,
+.landing-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* glow effect */
+.login-container::before,
+.landing-container::before {
+  content: "";
+  position: absolute;
+  width: 450px;
+  height: 450px;
+  background: #1db954;
+  filter: blur(180px);
+  opacity: 0.15;
+  top: -150px;
+  left: -100px;
+}
+
+.login-container::after,
+.landing-container::after {
+  content: "";
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: #1ed760;
+  filter: blur(170px);
+  opacity: 0.12;
+  bottom: -150px;
+  right: -120px;
+}
+
+/* =========================
+   LOGIN CARD
+========================= */
+.login-card {
+  position: relative;
+  z-index: 10;
+
+  width: 430px;
+  padding: 45px 40px;
+
+  border-radius: 22px;
+
+  background: rgba(24, 24, 24, 0.88);
+  backdrop-filter: blur(25px);
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65);
+
+  text-align: center;
+}
+
+/* LOGIN LOGO (FIXED - NO CONFLICT) */
+.login-logo {
+  width: 82px;
+  height: 82px;
+
+  margin: auto;
+  margin-bottom: 22px;
+
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1ed760, #1db954);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 38px;
+
+  box-shadow: 0 0 30px rgba(29, 185, 84, 0.45);
+}
+
+/* =========================
+   LANDING (PREMIUM UPGRADE)
+========================= */
+
+.landing-content {
+  text-align: center;
+  max-width: 650px;
+  padding: 24px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+/* LOGO */
+.landing-logo {
+  width: 92px;
+  height: 92px;
+
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1db954, #1ed760);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-size: 42px;
+
+  box-shadow:
+    0 0 35px rgba(29, 185, 84, 0.35),
+    0 10px 30px rgba(0, 0, 0, 0.4);
+
+  position: relative;
+}
+
+/* glow ring effect */
+.landing-logo::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: rgba(29, 185, 84, 0.15);
+  filter: blur(10px);
+  z-index: -1;
+}
+
+/* TITLE (add if not present) */
+.landing-content h1 {
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+
+  background: linear-gradient(90deg, #ffffff, #b3b3b3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* SUBTITLE */
+.landing-content p {
+  color: #b3b3b3;
+  font-size: 16px;
+  max-width: 480px;
+  line-height: 1.6;
+}
+
+/* =========================
+   INPUTS (premium glass style)
+========================= */
+.input-group {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 18px;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #ddd;
+}
+
+.input-group input {
+  width: 100%;
+  height: 52px;
+
+  padding: 0 16px;
+
+  border-radius: 12px;
+
+  background: rgba(15, 15, 15, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  color: white;
+
+  outline: none;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(10px);
+}
+
+.input-group input::placeholder {
+  color: #666;
+}
+
+.input-group input:focus {
+  border-color: #1db954;
+  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.2);
+  transform: translateY(-1px);
+}
+
+/* =========================
+   BUTTONS (premium feel)
+========================= */
+
+.login-btn,
+.primary-btn {
+  width: auto;
+  height: 50px;
+
+  padding: 0 26px;
+
+  border: none;
+  border-radius: 999px;
+
+  background: linear-gradient(90deg, #1db954, #1ed760);
+
+  color: #000;
+  font-weight: 700;
+  font-size: 15px;
+
+  cursor: pointer;
+
+  transition: all 0.25s ease;
+
+  box-shadow: 0 10px 25px rgba(29, 185, 84, 0.25);
+}
+
+.login-btn:hover,
+.primary-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 15px 35px rgba(29, 185, 84, 0.35);
+}
+
+/* secondary button */
+.secondary-btn {
+  height: 50px;
+  padding: 0 26px;
+
+  border-radius: 999px;
+
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.2);
+
+  color: white;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.25s ease;
+  backdrop-filter: blur(10px);
+}
+
+.secondary-btn:hover {
+  border-color: #1db954;
+  color: #1db954;
+  transform: translateY(-2px);
+}
+
+/* =========================
+   BUTTON GROUP (important)
+========================= */
+
+.btn-group {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* =========================
+   NAVBAR
+========================= */
+.nav {
+  height: 64px;
+  background: #000;
+  border-bottom: 1px solid #1a1a1a;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 20px;
+
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav .logo {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1db954;
+}
+
+/* search */
+.search-box {
+  display: flex;
+  align-items: center;
+
+  background: #121212;
+  border: 1px solid #2a2a2a;
+
+  padding: 8px 12px;
+  border-radius: 25px;
+
+  width: 320px;
+}
+
+.search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  width: 100%;
+}
+
+/* right */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.login-link {
+  color: white;
+  text-decoration: none;
+}
+
+.register-link {
+  color: #1db954;
+  text-decoration: none;
+}
+
+/* =========================
+   SIDEBAR (FIXED)
+========================= */
+.sidebar {
+  height: 100%;
+  background: #000;
+  border-right: 1px solid #1a1a1a;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 15px;
+
+  transition: 0.3s ease;
+}
+
+.sidebar.open {
+  width: 240px;
+}
+
+.sidebar.closed {
+  width: 70px;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.spotify-icon {
+  color: #1db954;
+  font-size: 24px;
+}
+
+/* menu */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 10px;
   border-radius: 8px;
-  transition: 0.2s ease;
+
+  color: #b3b3b3;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
-.sidebar-item:hover {
+.menu-item:hover {
+  background: #1a1a1a;
+  color: white;
+}
+
+.menu-item.active {
   background: #1a1a1a;
   color: #1db954;
-  transform: translateX(3px);
+}
+
+/* =========================
+   CARD (HOME SONGS)
+========================= */
+.card {
+  background: #181818;
+  border-radius: 12px;
+  padding: 15px;
+  transition: 0.2s;
+}
+
+.card:hover {
+  transform: scale(1.03);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 768px) {
+  .search-box {
+    display: none;
+  }
+}
+
+/* USER */
+
+/* PROFILE WRAPPER */
+.profile-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* CLICK AREA */
+.profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+/* DROPDOWN */
+.profile-dropdown {
+  position: absolute;
+  right: 0;
+  top: 45px;
+
+  width: 180px;
+
+  background: #121212;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+
+  padding: 12px;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  z-index: 999;
+}
+
+/* TEXT */
+.profile-dropdown p {
+  margin: 5px 0;
+  color: white;
+}
+
+/* HR */
+.profile-dropdown hr {
+  border: none;
+  border-top: 1px solid #2a2a2a;
+  margin: 10px 0;
+}
+
+.profile-dropdown {
+  position: absolute;
+  right: 0;
+  top: 45px;
+
+  width: 200px;
+
+  background: #121212;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+
+  padding: 10px;
+
+  box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+  z-index: 999;
+}
+
+.profile-header {
+  padding: 10px;
+}
+
+.profile-name {
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.profile-email {
+  color: #b3b3b3;
+  font-size: 12px;
+}
+
+.profile-item {
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #b3b3b3;
+  font-size: 13px;
+  transition: 0.2s;
+}
+
+.profile-item:hover {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+.logout {
+  color: #ff4d4d;
+}
+
+.logout:hover {
+  background: rgba(255, 77, 77, 0.1);
+}
+
+.profile-header{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding-bottom:10px;
+}
+
+.profile-avatar{
+    font-size:42px;
+    color:#1db954;
+}
+
+.profile-header h4{
+    color:white;
+    margin:0;
+    font-size:15px;
+}
+
+.profile-header p{
+    margin:2px 0 0;
+    font-size:12px;
+    color:#9a9a9a;
+}
+
+.profile-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    padding:10px 12px;
+    border-radius:8px;
+
+    color:#ddd;
+    cursor:pointer;
+
+    transition:.2s;
+}
+
+.profile-item:hover{
+    background:#1e1e1e;
+    color:#fff;
+}
+
+.profile-item.logout{
+    color:#ff5b5b;
+}
+
+.profile-item.logout:hover{
+    background:#2a1212;
+    color:#ff8080;
+}
+
+/* ===========================
+   SONG CARD
+=========================== */
+
+.song-card {
+  background: #181818;
+  border-radius: 14px;
+  padding: 12px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.song-card:hover {
+  background: #282828;
+  transform: translateY(-4px);
+}
+
+/* ===========================
+   IMAGE
+=========================== */
+
+.song-image-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.song-image {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  display: block;
+}
+
+/* ===========================
+   PLAY BUTTON
+=========================== */
+
+.play-btn {
+  position: absolute;
+  right: 15px;
+  bottom: 15px;
+
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+
+  background: #1db954;
+  color: #000;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-size: 20px;
+  cursor: pointer;
+
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+
+  opacity: 0;
+  transform: translateY(15px);
+
+  transition: all 0.3s ease;
+}
+
+.song-card:hover .play-btn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.play-btn:hover {
+  background: #1ed760;
+  transform: scale(1.08);
+}
+
+.play-btn:active {
+  transform: scale(0.95);
+}
+
+.play-icon {
+  margin-left: 3px;
+}
+
+/* ===========================
+   INFO
+=========================== */
+
+.song-info {
+  margin-top: 12px;
+}
+
+.song-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.song-header h6 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.song-info p {
+  margin-top: 5px;
+  color: #b3b3b3;
+  font-size: 13px;
+}
+
+/* ===========================
+   ACTIONS
+=========================== */
+
+.song-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.song-actions svg {
+  cursor: pointer;
+  color: #b3b3b3;
+  font-size: 18px;
+  transition: 0.2s;
+}
+
+.song-actions svg:hover {
+  color: white;
+}
+
+.liked {
+  color: #1db954 !important;
+}
+
+/* ===========================
+   DROPDOWN
+=========================== */
+
+.menu {
+  position: relative;
+}
+
+.menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: 28px;
+  width: 170px;
+  background: #282828;
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 100;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+}
+
+.menu-dropdown button {
+  width: 100%;
+  background: transparent;
+  color: white;
+  border: none;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.menu-dropdown button:hover {
+  background: #3e3e3e;
 }
