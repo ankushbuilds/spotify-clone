@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../api/axiosClient";
 
 const Login = ({ onLoginSuccess }) => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     identifier: "",
     password: "",
@@ -38,7 +41,13 @@ const Login = ({ onLoginSuccess }) => {
       localStorage.setItem("user", JSON.stringify(user));
 
       setMessage("Login successful");
+
+      // optional parent callback
       onLoginSuccess?.();
+
+      // ✅ NAVIGATE TO HOME
+      navigate("/");
+
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     } finally {
@@ -50,9 +59,7 @@ const Login = ({ onLoginSuccess }) => {
     <div className="login-container">
       <div className="login-card">
 
-        <div className="logo">
-          🎵
-        </div>
+        <div className="logo">🎵</div>
 
         <h1>Spotify Clone</h1>
         <p>Log in to continue listening</p>

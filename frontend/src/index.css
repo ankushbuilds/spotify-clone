@@ -758,3 +758,127 @@ body {
 .menu-dropdown button:hover {
   background: #3e3e3e;
 }
+
+/* ABOUT */
+.about-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  height: 100%;
+}
+
+.about-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(30, 215, 96, 0.4);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.about-card h4 {
+  margin-bottom: 12px;
+  color: #1db954; /* Spotify green */
+}
+
+.about-card p,
+.about-card li {
+  color: #b3b3b3;
+  font-size: 14px;
+}
+
+.about-card ul {
+  padding-left: 18px;
+}
+
+/* Account */
+.premium-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 24px;
+  backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+
+.premium-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(30, 215, 96, 0.4);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+}
+
+.card-title {
+  font-weight: 600;
+  color: #fff;
+}
+
+.premium-input {
+  width: 100%;
+  padding: 10px 14px;
+  margin-top: 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.4);
+  color: white;
+  outline: none;
+  transition: 0.2s;
+}
+
+.premium-input:focus {
+  border-color: #1db954;
+  box-shadow: 0 0 0 2px rgba(29,185,84,0.2);
+}
+
+.premium-btn {
+  background: #1db954;
+  color: black;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.premium-btn:hover {
+  background: #1ed760;
+  transform: scale(1.03);
+}
+
+.premium-btn-warning {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  border: 1px solid rgba(255, 77, 77, 0.4);
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(10px);
+}
+
+.premium-btn-warning:hover {
+  background: rgba(255, 77, 77, 0.15);
+  border-color: rgba(255, 77, 77, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 77, 77, 0.15);
+}
+
+.premium-btn-warning:active {
+  transform: scale(0.98);
+}
+
+.premium-btn-danger {
+  background: transparent;
+  border: 1px solid red;
+  color: red;
+  padding: 10px 16px;
+  border-radius: 10px;
+  transition: 0.2s;
+}
+
+.premium-btn-danger:hover {
+  background: red;
+  color: white;
+}

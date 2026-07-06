@@ -9,11 +9,12 @@ import {
   FaInfoCircle,
   FaUser,
 } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Navbar = ({ toggleSidebar, loggedIn, onLogout }) => {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -25,10 +26,19 @@ const Navbar = ({ toggleSidebar, loggedIn, onLogout }) => {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-
     return () =>
       document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleNavigate = (path) => {
+    setOpen(false);
+    navigate(path);
+  };
+
+  const handleLogout = () => {
+    setOpen(false);
+    onLogout();
+  };
 
   return (
     <nav className="nav">
@@ -52,7 +62,6 @@ const Navbar = ({ toggleSidebar, loggedIn, onLogout }) => {
       )}
 
       {/* RIGHT */}
-
       <div className="nav-right">
 
         {!loggedIn ? (
@@ -68,6 +77,7 @@ const Navbar = ({ toggleSidebar, loggedIn, onLogout }) => {
         ) : (
           <div className="profile-wrapper" ref={dropdownRef}>
 
+            {/* TRIGGER */}
             <div
               className="profile-trigger"
               onClick={() => setOpen(!open)}
@@ -79,6 +89,7 @@ const Navbar = ({ toggleSidebar, loggedIn, onLogout }) => {
               </span>
             </div>
 
+            {/* DROPDOWN */}
             {open && (
               <div className="profile-dropdown">
 
@@ -93,31 +104,36 @@ const Navbar = ({ toggleSidebar, loggedIn, onLogout }) => {
 
                 <hr />
 
-                <div className="profile-item">
+                <div className="profile-item" onClick={() => handleNavigate("/profile")}>
                   <FaUser /> Profile
                 </div>
 
-                <div className="profile-item">
+                <div className="profile-item" onClick={() => handleNavigate("/account")}>
                   <FaCog /> Account
                 </div>
 
-                <div className="profile-item">
+                <div className="profile-item" onClick={() => handleNavigate("/settings")}>
                   <FaCog /> Settings
                 </div>
 
-                <div className="profile-item">
+                <div className="profile-item" onClick={() => handleNavigate("/help")}>
                   <FaQuestionCircle /> Help
                 </div>
 
-                <div className="profile-item">
+                {/* ✅ ABOUT FIXED */}
+                <div
+                  className="profile-item"
+                  onClick={() => handleNavigate("/about")}
+                >
                   <FaInfoCircle /> About
                 </div>
 
                 <hr />
 
+                {/* LOGOUT FIXED */}
                 <div
                   className="profile-item logout"
-                  onClick={onLogout}
+                  onClick={handleLogout}
                 >
                   <FaSignOutAlt /> Logout
                 </div>

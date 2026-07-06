@@ -1,90 +1,167 @@
-const musicModel = require('../models/music.model');
-const albumModel = require('../models/album.model');
+const musicModel = require("../models/music.model");
+const albumModel = require("../models/album.model");
+const { uploadFile } = require("../services/storage.service");
 
-const { uploadFile } = require('../services/storage.service');
-const jwt = require('jsonwebtoken')
-
-// Create a new music
+// =======================
+// CREATE MUSIC
+// =======================
 async function createMusic(req, res) {
+  try {
     const { title } = req.body;
-    const file = req.file;
 
-    const result = await uploadFile(file.buffer.toString('base64'));
+    const musicFile = req.files?.music?.[0];
+    const imageFile = req.files?.image?.[0];
 
-    const music = await musicModel.create({
-        uri: result.url,
-        title,
-        artist: req.user.id
+    if (!musicFile) {
+      return res.status(400).json({
+        message: "Music file is required",
+      });
+    }
+
+    // Upload music file
+    const musicUpload = await uploadFile(
+      musicFile.buffer.toString("base64")
+    );
+
+    // Upload image file (optional)
+    let imageUrl = null;
+    
+    if (imageFile) {
+      const imageUpload = await uploadFile(
+        imageFile.buffer.toString("base64")
+      );
+
+      imageUrl = imageUpload.url;
+    }
+   console.log("IMAGE URL =>", imageUrl);
+    // Save to DB
+  const music = await musicModel.create({
+  title,
+  uri: musicUpload.url,
+  image: imageUrl || "",   // 🔥 FORCE FIELD EXISTENCE
+  artist: req.user.id,
+});
+    return res.status(201).json({
+      message: "Music created successfully",
+      music,
     });
+  } catch (err) {
+    console.error("createMusic error:", err);
 
-    res.status(201).json({
-        message: "Music created Successfully",
-        music: {
-            id: music._id,
-            title: music.title,
-            uri: music.uri,
-            artist: req.user.id
-        }
+    return res.status(500).json({
+      message: "Internal Server Error",
     });
+  }
 }
 
-
-// Create a new Album
+// =======================
+// CREATE ALBUM
+// =======================
 async function createAlbum(req, res) {
+  try {
     const { title, musics } = req.body;
 
     const album = await albumModel.create({
-        title,
-        artist: req.user.id,
-        musics: musics
+      title,
+      artist: req.user.id,
+      musics,
     });
 
-    res.status(201).json({
-        message: "Album created successfully",
-        album: {
-            id: album._id,
-            title: album.title,
-            artist: req.user.id,
-            musics: album.musics
-        }
+    return res.status(201).json({
+      message: "Album created successfully",
+      album,
     });
+  } catch (err) {
+    console.error("createAlbum error:", err);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
 }
 
-// Get all musics
+// =======================
+// GET ALL MUSICS
+// =======================
 async function getAllMusics(req, res) {
+  try {
     const musics = await musicModel
-        .find({})
-        .limit(20)
-        .populate("artist", "username email");
-
-    res.status(200).json({
-        success: true,
-        message: "All musics fetched successfully",
-        musics
-    });
-}
-
-// Get all albums
-async function getAllAlbums(req, res) {
-    const albums = await albumModel.find().select("title artist").populate("artist", "username email");
-    res.status(200).json({
-        message: "All album fetched successfully",
-        albums: albums
-    });
-}
-
-// Get album by id
-async function getAlbumById(req, res) {
-    const albumId = req.params.albumId;
-
-    const album = await albumModel.findById(albumId).populate("artist", "username email")
+      .find({})
+      .limit(20)
+      .populate("artist", "username email");
 
     return res.status(200).json({
-        message: "Album fetched successfuly",
-        album: album
-    })
+      success: true,
+      message: "All musics fetched successfully",
+      musics,
+    });
+  } catch (err) {
+    console.error("getAllMusics error:", err);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
 }
 
+// =======================
+// GET ALL ALBUMS
+// =======================
+async function getAllAlbums(req, res) {
+  try {
+    const albums = await albumModel
+      .find({})
+      .select("title artist musics")
+      .populate("artist", "username email");
 
+    return res.status(200).json({
+      message: "All albums fetched successfully",
+      albums,
+    });
+  } catch (err) {
+    console.error("getAllAlbums error:", err);
 
-module.exports = { createMusic, createAlbum, getAllMusics, getAllAlbums, getAlbumById };
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+}
+
+// =======================
+// GET ALBUM BY ID
+// =======================
+async function getAlbumById(req, res) {
+  try {
+    const { albumId } = req.params;
+
+    const album = await albumModel
+      .findById(albumId)
+      .populate("artist", "username email")
+      .populate("musics");
+
+    if (!album) {
+      return res.status(404).json({
+        message: "Album not found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Album fetched successfully",
+      album,
+    });
+  } catch (err) {
+    console.error("getAlbumById error:", err);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+}
+
+module.exports = {
+  createMusic,
+  createAlbum,
+  getAllMusics,
+  getAllAlbums,
+  getAlbumById,
+};

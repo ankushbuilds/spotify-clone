@@ -1,10 +1,16 @@
-import { useState, useRef } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Player from "./components/Player";
-import ProtectedRoute from "./components/ProtectedRoute";
+import About from "./components/About";
+import Help from "./components/Help";
+import Settings from "./components/Settings";
+import Account from "./components/Account";
+import Profile from "./components/Profile";
+
+
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -24,48 +30,65 @@ function App() {
     const saved = localStorage.getItem("likedSongs");
     return saved ? JSON.parse(saved) : [];
   });
+  const navigate = useNavigate();
 
-  const [loggedIn, setLoggedIn] = useState(() => {
+  // 🔥 AUTH STATE (FIXED)
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  // sync auth on app load
+  useEffect(() => {
     const token = localStorage.getItem("token");
-    return Boolean(token && token !== "undefined" && token !== "null");
-  });
+    setLoggedIn(!!token && token !== "undefined" && token !== "null");
+  }, []);
 
   const audioRef = useRef(new Audio());
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
-  const handleLoginSuccess = () => setLoggedIn(true);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    setLoggedIn(false);
+  // ✅ LOGIN SUCCESS FIX
+  const handleLoginSuccess = () => {
+    const token = localStorage.getItem("token");
+    setLoggedIn(!!token);
   };
 
-  // ❤️ Like / Unlike
+ const handleLogout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+
+  setLoggedIn(false);
+
+  navigate("/"); // 
+};
+
+  // ❤️ Like system
   const handleLike = (song) => {
     setLikedSongs((prev) => {
-      let updated;
-
       const exists = prev.some((s) => s._id === song._id);
 
-      if (exists) {
-        updated = prev.filter((s) => s._id !== song._id);
-      } else {
-        updated = [...prev, song];
-      }
+      const updated = exists
+        ? prev.filter((s) => s._id !== song._id)
+        : [...prev, song];
 
       localStorage.setItem("likedSongs", JSON.stringify(updated));
       return updated;
     });
   };
 
-  // ▶ Play
+  // ▶ Play system
   const handlePlay = (song) => {
-    if (!song?.uri) return;
-
     const audio = audioRef.current;
-    audio.pause();
 
+    if (currentSong?._id === song._id) {
+      if (isPlaying) {
+        audio.pause();
+        setIsPlaying(false);
+      } else {
+        audio.play().then(() => setIsPlaying(true)).catch(console.error);
+      }
+      return;
+    }
+
+    audio.pause();
     audio.src = song.uri;
     audio.load();
 
@@ -100,10 +123,9 @@ function App() {
               element={
                 loggedIn ? (
                   <Home
-                    setCurrentSong={setCurrentSong}
-                    setIsPlaying={setIsPlaying}
-                    audioRef={audioRef}
-                    onUnauthenticated={handleLogout}
+                    currentSong={currentSong}
+                    isPlaying={isPlaying}
+                    handlePlay={handlePlay}
                     handleLike={handleLike}
                   />
                 ) : (
@@ -119,10 +141,24 @@ function App() {
                 loggedIn ? (
                   <Navigate to="/" />
                 ) : (
-                  <Login handleLoginSuccess={handleLoginSuccess} />
+                  <Login onLoginSuccess={handleLoginSuccess} />
                 )
               }
             />
+
+            {/* About */}
+            <Route path="/about" element={<About />} />
+            {/* Help */}
+            <Route path="/help" element={<Help />} />
+
+               {/* Settings */}
+            <Route path="/settings" element={<Settings />} />
+
+             {/* Account */}
+            <Route path="/account" element={<Account />} />
+
+              {/* Profile */}
+            <Route path="/profile" element={<Profile />} />
 
             {/* REGISTER */}
             <Route
@@ -136,9 +172,16 @@ function App() {
             <Route
               path="/search"
               element={
-                <ProtectedRoute loggedIn={loggedIn}>
-                  <Search />
-                </ProtectedRoute>
+                loggedIn ? (
+                  <Search
+                    currentSong={currentSong}
+                    isPlaying={isPlaying}
+                    handlePlay={handlePlay}
+                    handleLike={handleLike}
+                  />
+                ) : (
+                  <Navigate to="/login" />
+                )
               }
             />
 
@@ -146,23 +189,25 @@ function App() {
             <Route
               path="/library"
               element={
-                <ProtectedRoute loggedIn={loggedIn}>
-                  <Library />
-                </ProtectedRoute>
+                loggedIn ? <Library /> : <Navigate to="/login" />
               }
             />
 
-            {/* LIKED SONGS */}
+            {/* LIKED */}
             <Route
               path="/liked"
               element={
-                <ProtectedRoute loggedIn={loggedIn}>
+                loggedIn ? (
                   <LikedSongs
                     likedSongs={likedSongs}
+                    currentSong={currentSong}
+                    isPlaying={isPlaying}
                     onPlay={handlePlay}
                     onLike={handleLike}
                   />
-                </ProtectedRoute>
+                ) : (
+                  <Navigate to="/login" />
+                )
               }
             />
 
@@ -170,13 +215,15 @@ function App() {
             <Route
               path="/album/:id"
               element={
-                <ProtectedRoute loggedIn={loggedIn}>
+                loggedIn ? (
                   <Album
                     audioRef={audioRef}
                     setCurrentSong={setCurrentSong}
                     setIsPlaying={setIsPlaying}
                   />
-                </ProtectedRoute>
+                ) : (
+                  <Navigate to="/login" />
+                )
               }
             />
 

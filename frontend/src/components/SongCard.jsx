@@ -1,37 +1,63 @@
 import React, { useState } from "react";
-import { FaPlay, FaHeart, FaRegHeart } from "react-icons/fa";
+import {
+  FaPlay,
+  FaPause,
+  FaHeart,
+  FaRegHeart,
+} from "react-icons/fa";
 import { BsThreeDots } from "react-icons/bs";
 
-const SongCard = ({ song, onPlay, onLike }) => {
+const SongCard = ({
+  song,
+  onPlay,
+  onLike,
+  currentSong,
+  isPlaying,
+}) => {
   const [showMenu, setShowMenu] = useState(false);
-  const [liked, setLiked] = useState(song.liked || false);
+  const [liked, setLiked] = useState(song?.liked || false);
 
   const handleLike = () => {
-    setLiked(!liked);
+    setLiked((prev) => !prev);
     onLike?.(song);
   };
 
+  // check if this song is active
+  const active =
+    currentSong?._id === song?._id && isPlaying;
+
   return (
     <div className="song-card">
+
+      {/* IMAGE */}
       <div className="song-image-wrapper">
         <img
-          src={song.image}
-          alt={song.title}
+          src={
+            song?.image && song.image.trim() !== ""
+              ? song.image
+              : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Crect width='150' height='150' fill='%23222'/%3E%3Ctext x='50%25' y='50%25' fill='white' font-size='12' text-anchor='middle' dy='.3em'%3ENo Image%3C/text%3E%3C/svg%3E"
+          }
+          alt={song?.title || "song"}
           className="song-image"
         />
 
-        {/* Spotify Style Play Button */}
+        {/* PLAY BUTTON */}
         <button
-          className="play-btn"
-          onClick={() => onPlay(song)}
+          className={`play-btn ${active ? "active" : ""}`}
+          onClick={() => onPlay?.(song)}
         >
-          <FaPlay className="play-icon" />
+          {active ? (
+            <FaPause className="play-icon" />
+          ) : (
+            <FaPlay className="play-icon" />
+          )}
         </button>
       </div>
 
+      {/* INFO */}
       <div className="song-info">
         <div className="song-header">
-          <h6>{song.title}</h6>
+          <h6>{song?.title || "No Title"}</h6>
 
           <div className="song-actions">
             <span onClick={handleLike}>
@@ -42,24 +68,39 @@ const SongCard = ({ song, onPlay, onLike }) => {
               )}
             </span>
 
+            {/* MENU */}
             <div className="menu">
               <BsThreeDots
-                onClick={() => setShowMenu(!showMenu)}
+                onClick={() =>
+                  setShowMenu((prev) => !prev)
+                }
               />
 
               {showMenu && (
                 <div className="menu-dropdown">
-                  <button onClick={() => onPlay(song)}>
-                    ▶ Play
+                  <button
+                    onClick={() => {
+                      onPlay?.(song);
+                      setShowMenu(false);
+                    }}
+                  >
+                    {active ? "⏸ Pause" : "▶ Play"}
                   </button>
 
-                  <button onClick={handleLike}>
+                  <button
+                    onClick={() => {
+                      handleLike();
+                      setShowMenu(false);
+                    }}
+                  >
                     {liked ? "💔 Unlike" : "❤️ Like"}
                   </button>
 
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(song.uri);
+                      navigator.clipboard.writeText(
+                        song?.uri || ""
+                      );
                       alert("Song link copied!");
                       setShowMenu(false);
                     }}
@@ -69,7 +110,9 @@ const SongCard = ({ song, onPlay, onLike }) => {
 
                   <button
                     onClick={() => {
-                      window.open(song.uri, "_blank");
+                      if (song?.uri) {
+                        window.open(song.uri, "_blank");
+                      }
                       setShowMenu(false);
                     }}
                   >
@@ -81,10 +124,11 @@ const SongCard = ({ song, onPlay, onLike }) => {
           </div>
         </div>
 
+        {/* ARTIST */}
         <p>
-          {song.artist?.username ||
-            song.artist ||
-            "Unknown Artist"}
+          {typeof song?.artist === "object"
+            ? song.artist?.username
+            : song?.artist || "Unknown Artist"}
         </p>
       </div>
     </div>

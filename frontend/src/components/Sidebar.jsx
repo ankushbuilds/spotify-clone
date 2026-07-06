@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   FaHome,
   FaSearch,
@@ -10,8 +10,9 @@ import {
 
 const Sidebar = ({ isOpen }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [active, setActive] = useState("Home");
+  const [active, setActive] = useState("");
 
   const menuItems = [
     {
@@ -36,6 +37,16 @@ const Sidebar = ({ isOpen }) => {
     },
   ];
 
+  // 🔥 SYNC ACTIVE STATE WITH URL
+  useEffect(() => {
+    const path = location.pathname;
+
+    if (path === "/") setActive("Home");
+    else if (path === "/search") setActive("Search");
+    else if (path === "/library") setActive("Library");
+    else if (path === "/liked") setActive("Liked Songs");
+  }, [location.pathname]);
+
   const handleClick = (item) => {
     setActive(item.name);
     navigate(item.path);
@@ -43,6 +54,7 @@ const Sidebar = ({ isOpen }) => {
 
   return (
     <div className={`sidebar ${isOpen ? "open" : "closed"}`}>
+      
       {/* LOGO */}
       <div className="sidebar-logo">
         <FaSpotify className="spotify-icon" />

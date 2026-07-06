@@ -3,11 +3,11 @@ import apiClient from "../api/axiosClient";
 import SongCard from "../components/SongCard";
 
 const Home = ({
-  setCurrentSong,
-  setIsPlaying,
-  audioRef,
-  onUnauthenticated,
+  currentSong,
+  isPlaying,
+  handlePlay,
   handleLike,
+  onUnauthenticated,
 }) => {
   const [songs, setSongs] = useState([]);
   const [error, setError] = useState("");
@@ -25,9 +25,6 @@ const Home = ({
 
       try {
         const res = await apiClient.get("/music/songs");
-
-        console.log("SUCCESS:", res.status);
-        console.log(res.data);
 
         setSongs(res.data.musics || []);
         setError("");
@@ -47,31 +44,6 @@ const Home = ({
 
     fetchSongs();
   }, [onUnauthenticated]);
-
-  // PLAY SONG
-  let currentAudio;
-
-  const handlePlay = (song) => {
-    if (!song?.uri) return;
-
-    if (currentAudio) {
-      currentAudio.pause();
-    }
-
-    const audio = audioRef.current;
-    currentAudio = audio;
-
-    audio.src = song.uri;
-    audio.load();
-
-    audio
-      .play()
-      .then(() => {
-        setCurrentSong(song);
-        setIsPlaying(true);
-      })
-      .catch(console.log);
-  };
 
   return (
     <div>
@@ -95,6 +67,8 @@ const Home = ({
             <div className="col-md-3 mb-4" key={song._id}>
               <SongCard
                 song={song}
+                currentSong={currentSong}
+                isPlaying={isPlaying}
                 onPlay={handlePlay}
                 onLike={handleLike}
               />
