@@ -15,10 +15,13 @@ const upload = multer({
 
 // Upload music
 router.post(
-    '/upload',
-    authMiddleware.authArtist,
-    upload.single('music'),
-    musicController.createMusic
+  "/upload",
+  authMiddleware.authArtist,
+  upload.fields([
+    { name: "music", maxCount: 1 },
+    { name: "image", maxCount: 1 },
+  ]),
+  musicController.createMusic
 );
 
 // Create album

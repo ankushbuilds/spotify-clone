@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   FaPlay,
   FaPause,
@@ -15,28 +15,66 @@ const Player = ({
   onPrev,
 }) => {
   const [progress, setProgress] = useState(0);
+  const [rotation, setRotation] = useState(0);
+  const animationRef = useRef(null);
 
-  // ✅ SAFE PLAY / PAUSE
-  const togglePlay = () => {
-    if (!currentSong || !audioRef?.current) return;
+  const audio = audioRef?.current;
 
-    if (audioRef.current.paused) {
-      audioRef.current.play();
-      setIsPlaying(true);
-    } else {
-      audioRef.current.pause();
-      setIsPlaying(false);
+  // ▶️ PLAY / PAUSE
+  const togglePlay = async () => {
+    if (!audio || !currentSong) return;
+
+    try {
+      if (audio.paused) {
+        await audio.play();
+        setIsPlaying(true);
+      } else {
+        audio.pause();
+        setIsPlaying(false);
+      }
+    } catch (err) {
+      console.log("Play error:", err);
     }
   };
 
-  // ✅ LIVE PROGRESS UPDATE (SAFE)
+  // ⏭ NEXT (SAFE WRAPPER)
+  const handleNext = () => {
+    setProgress(0);
+    onNext?.();
+  };
+
+  // ⏮ PREV (SAFE WRAPPER)
+  const handlePrev = () => {
+    setProgress(0);
+    onPrev?.();
+  };
+
+  // 🎡 ROTATION ANIMATION
   useEffect(() => {
-    const audio = audioRef?.current;
+    if (!isPlaying) return;
+
+    let last = performance.now();
+
+    const animate = (time) => {
+      const delta = time - last;
+      last = time;
+
+      setRotation((r) => r + delta * 0.03);
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animationRef.current);
+  }, [isPlaying]);
+
+  // 📊 PROGRESS TRACKING
+  useEffect(() => {
     if (!audio) return;
 
     const updateProgress = () => {
-      const percent =
-        (audio.currentTime / audio.duration) * 100;
+      if (!audio.duration) return;
+      const percent = (audio.currentTime / audio.duration) * 100;
       setProgress(isNaN(percent) ? 0 : percent);
     };
 
@@ -45,39 +83,55 @@ const Player = ({
     return () => {
       audio.removeEventListener("timeupdate", updateProgress);
     };
-  }, [audioRef]);
+  }, [audio]);
 
-  // ✅ SEEK
+  // ⏭ AUTO NEXT ON END
+  useEffect(() => {
+    if (!audio) return;
+
+    const handleEnd = () => {
+      setProgress(0);
+      onNext?.();
+    };
+
+    audio.addEventListener("ended", handleEnd);
+
+    return () => {
+      audio.removeEventListener("ended", handleEnd);
+    };
+  }, [audio, onNext]);
+
+  // 🎵 LOAD NEW SONG (IMPORTANT FIX)
+  useEffect(() => {
+    if (!audio || !currentSong) return;
+
+    const src = currentSong.uri || currentSong.src;
+    if (!src) return;
+
+    audio.src = src;
+    audio.load();
+
+    const playSong = async () => {
+      try {
+        await audio.play();
+        setIsPlaying(true);
+      } catch (err) {
+        console.log("Autoplay blocked:", err);
+        setIsPlaying(false);
+      }
+    };
+
+    playSong();
+  }, [currentSong]);
+
+  // 🎚 SEEK
   const handleSeek = (e) => {
-    const audio = audioRef?.current;
     if (!audio || !audio.duration) return;
 
-    const value = e.target.value;
+    const value = Number(e.target.value);
     audio.currentTime = (value / 100) * audio.duration;
     setProgress(value);
   };
-
-  // ✅ AUTO NEXT
-  useEffect(() => {
-    const audio = audioRef?.current;
-    if (!audio) return;
-
-    audio.onended = () => {
-      onNext?.();
-    };
-  }, [onNext, audioRef]);
-
-  // ✅ AUTO PLAY ON SONG CHANGE
-  useEffect(() => {
-    const audio = audioRef?.current;
-    if (!audio || !currentSong) return;
-
-    audio.src = currentSong.uri || currentSong.src || "";
-    if (!audio.src) return;
-
-    audio.play();
-    setIsPlaying(true);
-  }, [currentSong]);
 
   return (
     <div
@@ -93,23 +147,25 @@ const Player = ({
         <img
           src={
             currentSong?.image ||
-            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Crect width='60' height='60' fill='%23222'/%3E%3Ctext x='50%25' y='50%25' fill='%23fff' font-size='10' font-family='Arial,sans-serif' text-anchor='middle' dy='.3em'%3ENo%20Img%3C/text%3E%3C/svg%3E"
+            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='%23222'/%3E%3Ctext x='50%' y='50%' fill='white' font-size='10' text-anchor='middle'%3ENo Img%3C/text%3E%3C/svg%3E"
           }
           alt="song"
           style={{
-            width: "55px",
-            height: "55px",
-            borderRadius: "6px",
+            width: 60,
+            height: 60,
+            borderRadius: "50%",
             objectFit: "cover",
+            border: "2px solid #1db954",
+            transform: `rotate(${rotation}deg)`,
           }}
         />
 
         <div>
-          <h6 className="mb-0" style={{ fontSize: "14px" }}>
-            {currentSong?.title || "No song playing"}
+          <h6 className="mb-0" style={{ fontSize: 14 }}>
+            {currentSong?.title || "No song"}
           </h6>
           <small className="text-secondary">
-            {currentSong?.artist || "-"}
+            {currentSong?.artist?.username || "Unknown"}
           </small>
         </div>
       </div>
@@ -120,13 +176,19 @@ const Player = ({
         style={{ width: "40%" }}
       >
         <div className="d-flex align-items-center gap-3">
-          <FaStepBackward onClick={onPrev} style={styles.icon} />
+          <FaStepBackward
+            onClick={handlePrev}
+            style={{ cursor: "pointer", color: "#b3b3b3" }}
+          />
 
           <div onClick={togglePlay} style={styles.playBtn}>
             {isPlaying ? <FaPause /> : <FaPlay />}
           </div>
 
-          <FaStepForward onClick={onNext} style={styles.icon} />
+          <FaStepForward
+            onClick={handleNext}
+            style={{ cursor: "pointer", color: "#b3b3b3" }}
+          />
         </div>
 
         <input
@@ -138,8 +200,8 @@ const Player = ({
           style={{
             width: "75%",
             accentColor: "#1db954",
+            marginTop: 6,
             cursor: "pointer",
-            marginTop: "6px",
           }}
         />
       </div>
@@ -151,13 +213,9 @@ const Player = ({
 };
 
 const styles = {
-  icon: {
-    cursor: "pointer",
-    color: "#b3b3b3",
-  },
   playBtn: {
-    width: "42px",
-    height: "42px",
+    width: 42,
+    height: 42,
     borderRadius: "50%",
     background: "#1db954",
     display: "flex",

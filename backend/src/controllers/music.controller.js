@@ -1,88 +1,216 @@
-const musicModel = require('../models/music.model');
-const albumModel = require('../models/album.model');
+const musicModel = require("../models/music.model");
+const albumModel = require("../models/album.model");
+const { uploadFile } = require("../services/storage.service");
 
-const { uploadFile } = require('../services/storage.service');
-const jwt = require('jsonwebtoken')
-
-// Create a new music
+// =======================
+// CREATE MUSIC
+// =======================
 async function createMusic(req, res) {
+  try {
     const { title } = req.body;
-    const file = req.file;
 
-    const result = await uploadFile(file.buffer.toString('base64'));
+    if (!title || !title.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Title is required",
+      });
+    }
 
+    const musicFile = req.files?.music?.[0];
+    const imageFile = req.files?.image?.[0];
+
+    if (!musicFile) {
+      return res.status(400).json({
+        success: false,
+        message: "Music file is required",
+      });
+    }
+
+    // ================= UPLOAD MUSIC =================
+    const musicUpload = await uploadFile(
+      musicFile.buffer.toString("base64")
+    );
+
+    if (!musicUpload?.url) {
+      return res.status(500).json({
+        success: false,
+        message: "Music upload failed",
+      });
+    }
+
+    // ================= UPLOAD IMAGE =================
+    let imageUrl = "";
+
+    if (imageFile) {
+      try {
+        const imageUpload = await uploadFile(
+          imageFile.buffer.toString("base64")
+        );
+        imageUrl = imageUpload?.url || "";
+      } catch (imgErr) {
+        console.log("Image upload failed (non-blocking):", imgErr.message);
+      }
+    }
+
+    console.log("🎵 MUSIC URL =>", musicUpload.url);
+    console.log("🖼 IMAGE URL =>", imageUrl);
+
+    // ================= SAVE TO DB =================
     const music = await musicModel.create({
-        uri: result.url,
-        title,
-        artist: req.user.id
+      title: title.trim(),
+      uri: musicUpload.url,
+      image: imageUrl,
+      artist: req.user?.id,
     });
 
-    res.status(201).json({
-        message: "Music created Successfully",
-        music: {
-            id: music._id,
-            title: music.title,
-            uri: music.uri,
-            artist: req.user.id
-        }
+    return res.status(201).json({
+      success: true,
+      message: "Music created successfully",
+      music: {
+        _id: music._id,
+        title: music.title,
+        uri: music.uri,
+        image: music.image || "",
+        artist: music.artist,
+      },
     });
+  } catch (err) {
+    console.error("createMusic error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
 }
 
-
-// Create a new Album
+// =======================
+// CREATE ALBUM
+// =======================
 async function createAlbum(req, res) {
+  try {
     const { title, musics } = req.body;
 
+    if (!title || !title.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Title is required",
+      });
+    }
+
     const album = await albumModel.create({
-        title,
-        artist: req.user.id,
-        musics: musics
+      title: title.trim(),
+      artist: req.user?.id,
+      musics: Array.isArray(musics) ? musics : [],
     });
 
-    res.status(201).json({
-        message: "Album created successfully",
-        album: {
-            id: album._id,
-            title: album.title,
-            artist: req.user.id,
-            musics: album.musics
-        }
+    return res.status(201).json({
+      success: true,
+      message: "Album created successfully",
+      album,
     });
+  } catch (err) {
+    console.error("createAlbum error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
 }
 
-// Get all musics
+// =======================
+// GET ALL MUSICS
+// =======================
 async function getAllMusics(req, res) {
-    console.log("get all music passed");
-    const musics = await musicModel.find().limit(2).populate("artist", "username email");
-    console.log("Musics: ", musics)
-    res.status(200).json({
-        success: true,
-        message: "All musics fetched successfully",
-        musics: musics
-    })
-}
+  try {
+    const musics = await musicModel
+      .find({})
+      .limit(100)
+      .populate("artist", "username email");
 
-// Get all albums
-async function getAllAlbums(req, res) {
-    const albums = await albumModel.find().select("title artist").populate("artist", "username email");
-    res.status(200).json({
-        message: "All album fetched successfully",
-        albums: albums
-    });
-}
-
-// Get album by id
-async function getAlbumById(req, res) {
-    const albumId = req.params.albumId;
-
-    const album = await albumModel.findById(albumId).populate("artist", "username email")
+    const formatted = musics.map((m) => ({
+      _id: m._id,
+      title: m.title,
+      uri: m.uri,
+      image: m.image || "",
+      artist: m.artist || null,
+    }));
 
     return res.status(200).json({
-        message: "Album fetched successfuly",
-        album: album
-    })
+      success: true,
+      musics: formatted,
+    });
+  } catch (err) {
+    console.error("getAllMusics error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
 }
 
+// =======================
+// GET ALL ALBUMS
+// =======================
+async function getAllAlbums(req, res) {
+  try {
+    const albums = await albumModel
+      .find({})
+      .populate("artist", "username email");
 
+    return res.status(200).json({
+      success: true,
+      albums,
+    });
+  } catch (err) {
+    console.error("getAllAlbums error:", err);
 
-module.exports = { createMusic, createAlbum, getAllMusics, getAllAlbums, getAlbumById };
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+}
+
+// =======================
+// GET ALBUM BY ID
+// =======================
+async function getAlbumById(req, res) {
+  try {
+    const { albumId } = req.params;
+
+    const album = await albumModel
+      .findById(albumId)
+      .populate("artist", "username email")
+      .populate("musics");
+
+    if (!album) {
+      return res.status(404).json({
+        success: false,
+        message: "Album not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      album,
+    });
+  } catch (err) {
+    console.error("getAlbumById error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+}
+
+module.exports = {
+  createMusic,
+  createAlbum,
+  getAllMusics,
+  getAllAlbums,
+  getAlbumById,
+};

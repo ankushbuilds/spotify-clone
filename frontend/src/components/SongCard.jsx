@@ -1,118 +1,164 @@
-import React from "react";
-import { FaPlay, FaHeart } from "react-icons/fa";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  FaPlay,
+  FaPause,
+  FaHeart,
+  FaRegHeart,
+} from "react-icons/fa";
 import { BsThreeDots } from "react-icons/bs";
 
-const SongCard = ({ song, onPlay, onLike }) => {
+const SongCard = ({
+  song,
+  onPlay,
+  onLike,
+  currentSong,
+  isPlaying,
+}) => {
+  const [showMenu, setShowMenu] = useState(false);
+  const [liked, setLiked] = useState(song?.liked || false);
+
+  const menuRef = useRef(null);
+
+  const handleLike = () => {
+    setLiked((prev) => !prev);
+    onLike?.(song);
+  };
+
+  const active =
+    currentSong?._id === song?._id && isPlaying;
+
+  // 🧠 CLOSE MENU ON OUTSIDE CLICK
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
-    <div
-      className="song-card text-white"
-      style={{
-        background: "#181818",
-        borderRadius: "14px",
-        padding: "12px",
-        cursor: "pointer",
-        transition: "0.3s ease",
-        position: "relative",
-        overflow: "hidden",
-      }}
-      onMouseEnter={(e) =>
-        (e.currentTarget.style.transform = "scale(1.03)")
-      }
-      onMouseLeave={(e) =>
-        (e.currentTarget.style.transform = "scale(1)")
-      }
-    >
+    <div className={`song-card ${active ? "playing" : ""}`}>
+
       {/* IMAGE WRAPPER */}
-      <div
-        style={{
-          position: "relative",
-          borderRadius: "12px",
-          overflow: "hidden",
-        }}
-      >
+      <div className="song-image-wrapper">
+
         <img
-          src={song.image}
-          alt="song"
-          style={{
-            width: "100%",
-            height: "180px",
-            objectFit: "cover",
-            transition: "0.3s ease",
-          }}
+          src={
+            song?.image && song.image.trim() !== ""
+              ? song.image
+              : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Crect width='150' height='150' fill='%23222'/%3E%3Ctext x='50%25' y='50%25' fill='white' font-size='12' text-anchor='middle' dy='.3em'%3ENo Image%3C/text%3E%3C/svg%3E"
+          }
+          alt={song?.title || "song"}
+          className="song-image"
         />
 
-        {/* OVERLAY */}
-        <div
-          className="overlay"
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            height: "100%",
-            width: "100%",
-            background: "rgba(0,0,0,0.4)",
-            opacity: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "0.3s ease",
-          }}
+        {/* PLAY BUTTON */}
+        <button
+          className={`play-btn ${active ? "active" : ""}`}
+          onClick={() => onPlay?.(song)}
         >
-          <button
-            onClick={() => onPlay(song)}
-            style={{
-              background: "#1DB954",
-              border: "none",
-              borderRadius: "50%",
-              width: "50px",
-              height: "50px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              fontSize: "18px",
-              color: "black",
-            }}
-          >
-            <FaPlay />
-          </button>
-        </div>
+          {active ? (
+            <FaPause className="play-icon" />
+          ) : (
+            <FaPlay className="play-icon" />
+          )}
+        </button>
+
+        {/* 🎵 NOW PLAYING ANIMATION */}
+        {active && (
+          <div className="playing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        )}
       </div>
 
-      {/* Hover effect for overlay */}
-      <style>
-        {`
-          .song-card:hover .overlay {
-            opacity: 1;
-          }
-        `}
-      </style>
-
       {/* INFO */}
-      <div style={{ marginTop: "10px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <h6 style={{ margin: 0, fontSize: "15px", fontWeight: "600" }}>
-            {song.title}
-          </h6>
+      <div className="song-info">
 
-          <div style={{ display: "flex", gap: "10px" }}>
-            <FaHeart
-              onClick={() => onLike?.(song)}
-              style={{ cursor: "pointer", color: "#b3b3b3" }}
-            />
-            <BsThreeDots style={{ cursor: "pointer", color: "#b3b3b3" }} />
+        <div className="song-header">
+          <h6>{song?.title || "No Title"}</h6>
+
+          <div className="song-actions">
+
+            {/* LIKE */}
+            <span onClick={handleLike}>
+              {liked ? (
+                <FaHeart className="liked" />
+              ) : (
+                <FaRegHeart />
+              )}
+            </span>
+
+            {/* MENU */}
+            <div className="menu" ref={menuRef}>
+
+              <BsThreeDots
+                onClick={() => setShowMenu((prev) => !prev)}
+              />
+
+              {showMenu && (
+                <div className="menu-dropdown">
+
+                  <button
+                    onClick={() => {
+                      onPlay?.(song);
+                      setShowMenu(false);
+                    }}
+                  >
+                    {active ? "⏸ Pause" : "▶ Play"}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleLike();
+                      setShowMenu(false);
+                    }}
+                  >
+                    {liked ? "💔 Unlike" : "❤️ Like"}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(song?.uri || "");
+                      alert("Song link copied!");
+                      setShowMenu(false);
+                    }}
+                  >
+                    📋 Copy Link
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (song?.uri) {
+                        window.open(song.uri, "_blank");
+                      }
+                      setShowMenu(false);
+                    }}
+                  >
+                    🔗 Open Song
+                  </button>
+
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <p style={{ margin: 0, fontSize: "12px", color: "#b3b3b3" }}>
-          {song.artist?.username || song.artist || "Unknown artist"}
+        {/* ARTIST */}
+        <p>
+          {typeof song?.artist === "object"
+            ? song.artist?.username
+            : song?.artist || "Unknown Artist"}
         </p>
+
       </div>
     </div>
   );

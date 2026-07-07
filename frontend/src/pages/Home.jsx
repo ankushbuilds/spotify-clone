@@ -1,75 +1,134 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import apiClient from "../api/axiosClient";
 import SongCard from "../components/SongCard";
 
-const Home = ({ setCurrentSong, setIsPlaying, audioRef, onUnauthenticated }) => {
+const Home = ({
+  currentSong,
+  isPlaying,
+  handlePlay,
+  handleLike,
+  onUnauthenticated,
+}) => {
   const [songs, setSongs] = useState([]);
   const [error, setError] = useState("");
-  const token = localStorage.getItem("token");
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  // ================= NORMALIZE =================
+  const normalizeSong = (song) => ({
+    _id: song._id,
+    title: song.title || "Untitled",
+    image: song.image || "",
+    artist:
+      typeof song.artist === "object"
+        ? song.artist?.username
+        : song.artist || "Unknown Artist",
+
+    uri: song.uri || song.audioUrl || song.file || "",
+  });
+
+  // ================= FETCH SONGS =================
+  const fetchSongs = useCallback(async () => {
+    const token = localStorage.getItem("token");
+
     if (!token) {
       setError("Please log in to view songs.");
+      setLoading(false);
       return;
     }
 
-    apiClient
-      .get("/music/songs")
-      .then((res) => {
-        console.log("SUCCESS:", res.status);
-        console.log(res.data);
-        setSongs(res.data.musics);
-      })
-      .catch((err) => {
-        if (err.response?.status === 401) {
-          onUnauthenticated?.();
-          setError("Session expired. Please log in again.");
-          return;
-        }
+    try {
+      setLoading(true);
 
-        setError(err.response?.data?.message || "Error fetching songs.");
-        console.log("STATUS:", err.response?.status);
-        console.log("DATA:", err.response?.data);
-        console.log("URL:", err.config?.url);
-      });
-  }, [token]);
+      const res = await apiClient.get("/music/songs");
 
-  // 🎧 PLAY SONG
-  const handlePlay = (song) => {
-    const audio = audioRef?.current;
+      const backendRaw =
+        res.data?.musics ||
+        res.data?.songs ||
+        res.data?.data ||
+        [];
 
-    if (!audio || !song?.uri) return;
+      const backendSongs = backendRaw.map(normalizeSong);
 
-    audio.src = song.uri;
+      const localSongs =
+        JSON.parse(localStorage.getItem("mySongs")) || [];
 
-    audio
-      .play()
-      .then(() => {
-        setCurrentSong(song);
-        setIsPlaying(true);
-      })
-      .catch((err) => console.log("Play error:", err));
-  };
+      const localNormalized = localSongs.map(normalizeSong);
+
+      // ================= MERGE WITHOUT DUPLICATES =================
+      const merged = [
+        ...backendSongs,
+        ...localNormalized.filter(
+          (ls) => !backendSongs.some((bs) => bs._id === ls._id)
+        ),
+      ];
+
+      setSongs(merged);
+      setError("");
+    } catch (err) {
+      console.log("Home fetch error:", err);
+
+      if (err.response?.status === 401) {
+        onUnauthenticated?.();
+        setError("Session expired. Please log in again.");
+      } else {
+        setError(
+          err.response?.data?.message || "Error fetching songs."
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [onUnauthenticated]);
+
+  // ================= INITIAL LOAD =================
+  useEffect(() => {
+    fetchSongs();
+  }, [fetchSongs]);
+
+  // ================= LIVE SYNC =================
+  useEffect(() => {
+    const sync = () => fetchSongs();
+
+    window.addEventListener("storage", sync);
+
+    return () => window.removeEventListener("storage", sync);
+  }, [fetchSongs]);
 
   return (
     <div>
       <h2>🎧 Welcome to Spotify Clone</h2>
 
-      {error ? (
-        <div className="alert alert-warning mt-3" role="alert">
-          {error}
-        </div>
-      ) : null}
+      {/* ERROR */}
+      {error && (
+        <div className="alert alert-warning mt-3">{error}</div>
+      )}
 
+      {/* LOADING */}
+      {loading && !error && (
+        <p className="text-light mt-3">
+          🎧 Loading fresh music for you...
+        </p>
+      )}
+
+      {/* SONG GRID */}
       <div className="row mt-3">
-        {songs.length > 0 ? (
+        {!loading && songs.length > 0 ? (
           songs.map((song) => (
-            <div className="col-md-3" key={song._id}>
-              <SongCard song={song} onPlay={handlePlay} />
+            <div className="col-md-3 mb-4" key={song._id}>
+              <SongCard
+                song={song}
+                currentSong={currentSong}
+                isPlaying={isPlaying}
+                onPlay={handlePlay}
+                onLike={handleLike}
+              />
             </div>
           ))
         ) : (
-          !error && <p className="text-light">Loading songs...</p>
+          !loading &&
+          !error && (
+            <p className="text-light">No songs available.</p>
+          )
         )}
       </div>
     </div>
