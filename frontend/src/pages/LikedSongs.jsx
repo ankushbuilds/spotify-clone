@@ -16,6 +16,7 @@ const LikedSongs = ({ likedSongs, onPlay, onLike }) => {
                 song={song}
                 onPlay={onPlay}
                 onLike={onLike}
+                isLiked={true}
               />
             </div>
           ))}

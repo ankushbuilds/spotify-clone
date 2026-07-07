@@ -1,59 +1,70 @@
-const express = require('express');
-const musicController = require('../controllers/music.controller');
-const authMiddleware = require('../middlewares/auth.middleware');
-const multer = require('multer');
+const express = require("express");
+const musicController = require("../controllers/music.controller");
+const authMiddleware = require("../middlewares/auth.middleware");
+const multer = require("multer");
 
 const router = express.Router();
 
 const upload = multer({
-    storage: multer.memoryStorage()
+  storage: multer.memoryStorage()
 });
 
-// =====================
 // ARTIST ROUTES
-// =====================
 
-// Upload music
 router.post(
   "/upload",
+  authMiddleware.auth,
   authMiddleware.authArtist,
   upload.fields([
-    { name: "music", maxCount: 1 },
-    { name: "image", maxCount: 1 },
+    {
+      name:"music",
+      maxCount:1
+    },
+    {
+      name:"image",
+      maxCount:1
+    }
   ]),
   musicController.createMusic
 );
 
-// Create album
 router.post(
-    '/album',
-    authMiddleware.authArtist,
-    musicController.createAlbum
+  "/album",
+  authMiddleware.auth,
+  authMiddleware.authArtist,
+  musicController.createAlbum
 );
 
-// =====================
-// USER ROUTES
-// =====================
+// USER + ARTIST ROUTES
 
-// Get all songs
 router.get(
-    '/songs',
-    authMiddleware.authUser,
-    musicController.getAllMusics
+  "/songs",
+  authMiddleware.auth,
+  authMiddleware.authUser,
+  musicController.getAllMusics
 );
 
-// Get all albums
 router.get(
-    '/albums',
-    authMiddleware.authUser,
-    musicController.getAllAlbums
+  "/albums",
+  authMiddleware.auth,
+  authMiddleware.authUser,
+  musicController.getAllAlbums
 );
 
-// Get single album
 router.get(
-    '/albums/:albumId',
-    authMiddleware.authUser,
-    musicController.getAlbumById
+  "/albums/:albumId",
+  authMiddleware.auth,
+  authMiddleware.authUser,
+  musicController.getAlbumById
+);
+
+// DELETE MUSIC
+
+router.delete(
+  "/:id",
+  authMiddleware.auth,
+  authMiddleware.authArtist,
+  musicController.deleteMusic
 );
 
 module.exports = router;

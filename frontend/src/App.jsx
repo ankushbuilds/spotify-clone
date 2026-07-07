@@ -51,9 +51,19 @@ function App() {
   }, []);
 
   const handleLoginSuccess = () => {
-    const token = localStorage.getItem("token");
-    setLoggedIn(!!token);
-  };
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+
+  setLoggedIn(!!token);
+
+  // new user login => old data clear
+  setCurrentSong(null);
+  setIsPlaying(false);
+  setLikedSongs([]);
+
+  localStorage.removeItem("currentSong");
+  localStorage.removeItem("likedSongs");
+};
 
   // ================= PERSIST SONG =================
   useEffect(() => {
@@ -73,6 +83,8 @@ function App() {
     localStorage.removeItem("user");
     localStorage.removeItem("currentSong");
     localStorage.removeItem("isPlaying");
+      localStorage.removeItem("likedSongs");
+
 
     audioRef.current.pause();
     audioRef.current.src = "";
@@ -80,6 +92,8 @@ function App() {
     setCurrentSong(null);
     setIsPlaying(false);
     setLoggedIn(false);
+      setLikedSongs([]);
+
 
     navigate("/");
   };
