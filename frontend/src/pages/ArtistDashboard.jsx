@@ -15,21 +15,24 @@ const ArtistDashboard = () => {
     fetchSongs();
   }, []);
 
- const fetchSongs = async () => {
-  try {
-    const res = await axiosClient.get("/music/songs", {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+  const fetchSongs = async () => {
+    try {
+      const res = await axiosClient.get("/music/my-songs", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
 
+      setSongs(res.data.musics || []);
 
-    setSongs(res.data.musics || []);
+    } catch (err) {
+      console.log(
+        "Fetch songs error:",
+        err.response?.data || err.message
+      );
+    }
+  };
 
-  } catch (err) {
-    console.log(err.response?.data);
-  }
-};
   const handleUpload = async (e) => {
     e.preventDefault();
 
@@ -67,7 +70,7 @@ const ArtistDashboard = () => {
       setAudio(null);
       setImageFile(null);
 
-      fetchSongs();
+      await fetchSongs();
 
     } catch (err) {
       console.log(
@@ -106,7 +109,9 @@ const ArtistDashboard = () => {
         err.response?.data
       );
 
-      alert("Delete failed");
+      alert(
+        err.response?.data?.message || "Delete failed"
+      );
     }
   };
 
@@ -147,6 +152,12 @@ const ArtistDashboard = () => {
             onChange={e => setImageFile(e.target.files[0])}
           />
 
+          {loading && (
+            <div className="alert alert-info">
+              🎵 Uploading song, please wait...
+            </div>
+          )}
+
           <button
             className="premium-btn"
             disabled={loading}
@@ -158,7 +169,6 @@ const ArtistDashboard = () => {
 
       </div>
 
-
       <div className="mt-5">
 
         <h4>Your Songs</h4>
@@ -168,7 +178,6 @@ const ArtistDashboard = () => {
             No songs uploaded
           </p>
         )}
-
 
         {songs.map(song => (
 
@@ -206,7 +215,6 @@ const ArtistDashboard = () => {
                 </div>
               )}
 
-
               <div>
                 <h6>{song.title}</h6>
 
@@ -218,13 +226,11 @@ const ArtistDashboard = () => {
 
             </div>
 
-
             <div className="d-flex gap-3 align-items-center">
 
               <audio controls>
                 <source src={song.uri}/>
               </audio>
-
 
               <button
                 className="btn btn-danger btn-sm"

@@ -130,6 +130,30 @@ async function getAllMusics(req,res){
   }
 }
 
+// Get MY MUsic
+async function getMyMusics(req,res){
+  try{
+    const musics = await musicModel
+      .find({
+        artist:req.user.id
+      })
+      .populate("artist","username email");
+
+    return res.status(200).json({
+      success:true,
+      musics
+    });
+
+  }catch(err){
+    console.log("getMyMusics error:",err);
+
+    return res.status(500).json({
+      success:false,
+      message:"Internal Server Error"
+    });
+  }
+}
+
 // GET ALL ALBUMS
 async function getAllAlbums(req,res){
   try{
@@ -226,6 +250,7 @@ module.exports={
   createMusic,
   createAlbum,
   getAllMusics,
+  getMyMusics,
   getAllAlbums,
   getAlbumById,
   deleteMusic

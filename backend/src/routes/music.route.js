@@ -45,6 +45,13 @@ router.get(
 );
 
 router.get(
+    "/my-songs",
+      authMiddleware.auth,
+  authMiddleware.authUser,
+  musicController.getMyMusics
+)
+
+router.get(
   "/albums",
   authMiddleware.auth,
   authMiddleware.authUser,
