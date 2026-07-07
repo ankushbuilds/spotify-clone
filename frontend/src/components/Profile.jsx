@@ -1,27 +1,41 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 const Profile = () => {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const [user, setUser] = useState(null);
 
-  const [username, setUsername] = useState(user?.username || "");
-  const [email, setEmail] = useState(user?.email || "");
-  const [bio, setBio] = useState(user?.bio || "");
-
-  const [image, setImage] = useState(user?.image || "");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [bio, setBio] = useState("");
+  const [image, setImage] = useState("");
   const [message, setMessage] = useState("");
 
+  // ================= LOAD USER =================
+  useEffect(() => {
+    const savedUser = JSON.parse(localStorage.getItem("user"));
+
+    if (savedUser) {
+      setUser(savedUser);
+      setUsername(savedUser.username || "");
+      setEmail(savedUser.email || "");
+      setBio(savedUser.bio || "");
+      setImage(savedUser.image || "");
+    }
+  }, []);
+
+  // ================= IMAGE UPLOAD =================
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
 
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImage(reader.result);
+    };
+    reader.readAsDataURL(file);
   };
 
+  // ================= SAVE PROFILE =================
   const handleSave = (e) => {
     e.preventDefault();
 
@@ -33,12 +47,35 @@ const Profile = () => {
       image,
     };
 
+    setUser(updatedUser);
     localStorage.setItem("user", JSON.stringify(updatedUser));
 
     setMessage("✅ Profile updated successfully 🎉");
+    setTimeout(() => setMessage(""), 2000);
+  };
+
+  // ================= BECOME ARTIST (OPTION 1) =================
+  const becomeArtist = () => {
+    const updatedUser = {
+      ...user,
+      role: "artist",
+    };
+
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+
+    setMessage("🎤 You are now an Artist!");
 
     setTimeout(() => setMessage(""), 2000);
   };
+
+  if (!user) {
+    return (
+      <div className="text-white p-4">
+        Loading profile...
+      </div>
+    );
+  }
 
   return (
     <div className="container text-white py-5">
@@ -57,7 +94,7 @@ const Profile = () => {
 
       <div className="row g-4">
 
-        {/* LEFT PROFILE CARD */}
+        {/* LEFT CARD */}
         <div className="col-md-5">
           <div className="premium-card text-center">
 
@@ -76,7 +113,11 @@ const Profile = () => {
                 <img
                   src={image}
                   alt="profile"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
                 />
               ) : (
                 <div
@@ -99,11 +140,23 @@ const Profile = () => {
             <h4>{username}</h4>
             <p className="text-secondary small">{email}</p>
 
-            <span className="badge bg-success">Active User</span>
+            <span className="badge bg-success">
+              {user.role === "artist" ? "🎤 Artist" : "👤 User"}
+            </span>
 
             <div className="mt-3 text-secondary small">
               Member since: 2026
             </div>
+
+            {/* ARTIST BUTTON */}
+            {user.role !== "artist" && (
+              <button
+                className="premium-btn mt-3"
+                onClick={becomeArtist}
+              >
+                Become an Artist
+              </button>
+            )}
 
           </div>
         </div>
@@ -112,11 +165,10 @@ const Profile = () => {
         <div className="col-md-7">
           <div className="premium-card">
 
-            <h4 className="card-title">✏️ Edit Profile</h4>
+            <h4>✏️ Edit Profile</h4>
 
             <form onSubmit={handleSave}>
 
-              {/* IMAGE UPLOAD */}
               <div className="mt-3">
                 <label className="form-label text-secondary small">
                   Profile Image
@@ -162,7 +214,6 @@ const Profile = () => {
                 <textarea
                   className="premium-input"
                   rows="3"
-                  placeholder="Write something about yourself..."
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                 />

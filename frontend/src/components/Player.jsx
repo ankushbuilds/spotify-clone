@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   FaPlay,
   FaPause,
@@ -15,28 +15,61 @@ const Player = ({
   onPrev,
 }) => {
   const [progress, setProgress] = useState(0);
+  const [rotation, setRotation] = useState(0);
+  const animationRef = useRef(null);
 
-  // ▶️ PLAY / PAUSE TOGGLE
+  const audio = audioRef?.current;
+
+  // ▶️ PLAY / PAUSE
   const togglePlay = async () => {
-    const audio = audioRef?.current;
     if (!audio || !currentSong) return;
 
-    if (audio.paused) {
-      try {
+    try {
+      if (audio.paused) {
         await audio.play();
         setIsPlaying(true);
-      } catch (err) {
-        console.log("Play error:", err);
+      } else {
+        audio.pause();
+        setIsPlaying(false);
       }
-    } else {
-      audio.pause();
-      setIsPlaying(false);
+    } catch (err) {
+      console.log("Play error:", err);
     }
   };
 
-  // 📊 LIVE PROGRESS UPDATE
+  // ⏭ NEXT (SAFE WRAPPER)
+  const handleNext = () => {
+    setProgress(0);
+    onNext?.();
+  };
+
+  // ⏮ PREV (SAFE WRAPPER)
+  const handlePrev = () => {
+    setProgress(0);
+    onPrev?.();
+  };
+
+  // 🎡 ROTATION ANIMATION
   useEffect(() => {
-    const audio = audioRef?.current;
+    if (!isPlaying) return;
+
+    let last = performance.now();
+
+    const animate = (time) => {
+      const delta = time - last;
+      last = time;
+
+      setRotation((r) => r + delta * 0.03);
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animationRef.current);
+  }, [isPlaying]);
+
+  // 📊 PROGRESS TRACKING
+  useEffect(() => {
     if (!audio) return;
 
     const updateProgress = () => {
@@ -50,14 +83,14 @@ const Player = ({
     return () => {
       audio.removeEventListener("timeupdate", updateProgress);
     };
-  }, [audioRef]);
+  }, [audio]);
 
-  // ⏭️ AUTO NEXT SONG
+  // ⏭ AUTO NEXT ON END
   useEffect(() => {
-    const audio = audioRef?.current;
     if (!audio) return;
 
     const handleEnd = () => {
+      setProgress(0);
       onNext?.();
     };
 
@@ -66,14 +99,13 @@ const Player = ({
     return () => {
       audio.removeEventListener("ended", handleEnd);
     };
-  }, [onNext, audioRef]);
+  }, [audio, onNext]);
 
-  // 🎵 LOAD NEW SONG (FIXED + SAFE PLAY)
+  // 🎵 LOAD NEW SONG (IMPORTANT FIX)
   useEffect(() => {
-    const audio = audioRef?.current;
     if (!audio || !currentSong) return;
 
-    const src = currentSong.uri || currentSong.src || "";
+    const src = currentSong.uri || currentSong.src;
     if (!src) return;
 
     audio.src = src;
@@ -84,17 +116,16 @@ const Player = ({
         await audio.play();
         setIsPlaying(true);
       } catch (err) {
-        console.log("Auto play error:", err);
+        console.log("Autoplay blocked:", err);
         setIsPlaying(false);
       }
     };
 
     playSong();
-  }, [currentSong, audioRef, setIsPlaying]);
+  }, [currentSong]);
 
-  // 🎚️ SEEK BAR
+  // 🎚 SEEK
   const handleSeek = (e) => {
-    const audio = audioRef?.current;
     if (!audio || !audio.duration) return;
 
     const value = Number(e.target.value);
@@ -116,35 +147,37 @@ const Player = ({
         <img
           src={
             currentSong?.image ||
-            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Crect width='60' height='60' fill='%23222'/%3E%3Ctext x='50%25' y='50%25' fill='%23fff' font-size='10' font-family='Arial' text-anchor='middle' dy='.3em'%3ENo Img%3C/text%3E%3C/svg%3E"
+            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='%23222'/%3E%3Ctext x='50%' y='50%' fill='white' font-size='10' text-anchor='middle'%3ENo Img%3C/text%3E%3C/svg%3E"
           }
           alt="song"
           style={{
-            width: "55px",
-            height: "55px",
-            borderRadius: "6px",
+            width: 60,
+            height: 60,
+            borderRadius: "50%",
             objectFit: "cover",
+            border: "2px solid #1db954",
+            transform: `rotate(${rotation}deg)`,
           }}
         />
 
         <div>
-          <h6 className="mb-0" style={{ fontSize: "14px" }}>
-            {currentSong?.title || "No song playing"}
+          <h6 className="mb-0" style={{ fontSize: 14 }}>
+            {currentSong?.title || "No song"}
           </h6>
-         <small className="text-secondary">
-  {currentSong?.artist?.username || "Unknown Artist"}
-</small>
+          <small className="text-secondary">
+            {currentSong?.artist?.username || "Unknown"}
+          </small>
         </div>
       </div>
 
-      {/* CENTER CONTROLS */}
+      {/* CENTER */}
       <div
         className="d-flex flex-column align-items-center"
         style={{ width: "40%" }}
       >
         <div className="d-flex align-items-center gap-3">
           <FaStepBackward
-            onClick={onPrev}
+            onClick={handlePrev}
             style={{ cursor: "pointer", color: "#b3b3b3" }}
           />
 
@@ -153,7 +186,7 @@ const Player = ({
           </div>
 
           <FaStepForward
-            onClick={onNext}
+            onClick={handleNext}
             style={{ cursor: "pointer", color: "#b3b3b3" }}
           />
         </div>
@@ -167,13 +200,13 @@ const Player = ({
           style={{
             width: "75%",
             accentColor: "#1db954",
+            marginTop: 6,
             cursor: "pointer",
-            marginTop: "6px",
           }}
         />
       </div>
 
-      {/* RIGHT (EMPTY FOR NOW) */}
+      {/* RIGHT */}
       <div style={{ width: "30%" }} />
     </div>
   );
@@ -181,8 +214,8 @@ const Player = ({
 
 const styles = {
   playBtn: {
-    width: "42px",
-    height: "42px",
+    width: 42,
+    height: 42,
     borderRadius: "50%",
     background: "#1db954",
     display: "flex",

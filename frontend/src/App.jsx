@@ -11,7 +11,6 @@ import Account from "./components/Account";
 import Profile from "./components/Profile";
 
 
-
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -20,47 +19,72 @@ import Search from "./pages/Search";
 import Library from "./pages/Library";
 import LikedSongs from "./pages/LikedSongs";
 import Album from "./pages/Album";
+import ArtistDashboard from "./pages/ArtistDashboard"
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [currentSong, setCurrentSong] = useState(null);
+  
+
+  // ✅ restore current song
+  const [currentSong, setCurrentSong] = useState(() => {
+    const savedSong = localStorage.getItem("currentSong");
+    return savedSong ? JSON.parse(savedSong) : null;
+  });
+
   const [isPlaying, setIsPlaying] = useState(false);
 
   const [likedSongs, setLikedSongs] = useState(() => {
     const saved = localStorage.getItem("likedSongs");
     return saved ? JSON.parse(saved) : [];
   });
+
   const navigate = useNavigate();
 
-  // 🔥 AUTH STATE (FIXED)
   const [loggedIn, setLoggedIn] = useState(false);
 
-  // sync auth on app load
+  const audioRef = useRef(new Audio());
+
+  // ================= AUTH =================
   useEffect(() => {
     const token = localStorage.getItem("token");
     setLoggedIn(!!token && token !== "undefined" && token !== "null");
   }, []);
 
-  const audioRef = useRef(new Audio());
-
-  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
-
-  // ✅ LOGIN SUCCESS FIX
   const handleLoginSuccess = () => {
     const token = localStorage.getItem("token");
     setLoggedIn(!!token);
   };
 
- const handleLogout = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
+  // ================= PERSIST SONG =================
+  useEffect(() => {
+    if (currentSong) {
+      localStorage.setItem("currentSong", JSON.stringify(currentSong));
+    } else {
+      localStorage.removeItem("currentSong");
+    }
+  }, [currentSong]);
 
-  setLoggedIn(false);
+  // ================= SIDEBAR =================
+  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
-  navigate("/"); // 
-};
+  // ================= LOGOUT =================
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("currentSong");
+    localStorage.removeItem("isPlaying");
 
-  // ❤️ Like system
+    audioRef.current.pause();
+    audioRef.current.src = "";
+
+    setCurrentSong(null);
+    setIsPlaying(false);
+    setLoggedIn(false);
+
+    navigate("/");
+  };
+
+  // ================= LIKE SYSTEM =================
   const handleLike = (song) => {
     setLikedSongs((prev) => {
       const exists = prev.some((s) => s._id === song._id);
@@ -74,7 +98,7 @@ function App() {
     });
   };
 
-  // ▶ Play system
+  // ================= PLAY SYSTEM =================
   const handlePlay = (song) => {
     const audio = audioRef.current;
 
@@ -103,6 +127,7 @@ function App() {
   return (
     <div className="d-flex flex-column vh-100 bg-dark text-white">
 
+      {/* NAVBAR */}
       <Navbar
         toggleSidebar={toggleSidebar}
         loggedIn={loggedIn}
@@ -146,27 +171,18 @@ function App() {
               }
             />
 
-            {/* About */}
-            <Route path="/about" element={<About />} />
-            {/* Help */}
-            <Route path="/help" element={<Help />} />
-
-               {/* Settings */}
-            <Route path="/settings" element={<Settings />} />
-
-             {/* Account */}
-            <Route path="/account" element={<Account />} />
-
-              {/* Profile */}
-            <Route path="/profile" element={<Profile />} />
-
             {/* REGISTER */}
             <Route
               path="/register"
-              element={
-                loggedIn ? <Navigate to="/" /> : <Register />
-              }
+              element={loggedIn ? <Navigate to="/" /> : <Register />}
             />
+
+            {/* ABOUT */}
+            <Route path="/about" element={<About />} />
+            <Route path="/help" element={<Help />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="/profile" element={<Profile />} />
 
             {/* SEARCH */}
             <Route
@@ -226,6 +242,15 @@ function App() {
                 )
               }
             />
+            {/* Artist Dashboard */}
+            <Route
+  path="/artist/dashboard"
+  element={
+    loggedIn && JSON.parse(localStorage.getItem("user"))?.role === "artist"
+      ? <ArtistDashboard />
+      : <Navigate to="/" />
+  }
+/>
 
             {/* FALLBACK */}
             <Route path="*" element={<Navigate to="/" />} />

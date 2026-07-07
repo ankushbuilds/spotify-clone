@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   FaPlay,
   FaPause,
@@ -17,20 +17,37 @@ const SongCard = ({
   const [showMenu, setShowMenu] = useState(false);
   const [liked, setLiked] = useState(song?.liked || false);
 
+  const menuRef = useRef(null);
+
   const handleLike = () => {
     setLiked((prev) => !prev);
     onLike?.(song);
   };
 
-  // check if this song is active
   const active =
     currentSong?._id === song?._id && isPlaying;
 
-  return (
-    <div className="song-card">
+  // 🧠 CLOSE MENU ON OUTSIDE CLICK
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    };
 
-      {/* IMAGE */}
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <div className={`song-card ${active ? "playing" : ""}`}>
+
+      {/* IMAGE WRAPPER */}
       <div className="song-image-wrapper">
+
         <img
           src={
             song?.image && song.image.trim() !== ""
@@ -52,14 +69,26 @@ const SongCard = ({
             <FaPlay className="play-icon" />
           )}
         </button>
+
+        {/* 🎵 NOW PLAYING ANIMATION */}
+        {active && (
+          <div className="playing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        )}
       </div>
 
       {/* INFO */}
       <div className="song-info">
+
         <div className="song-header">
           <h6>{song?.title || "No Title"}</h6>
 
           <div className="song-actions">
+
+            {/* LIKE */}
             <span onClick={handleLike}>
               {liked ? (
                 <FaHeart className="liked" />
@@ -69,15 +98,15 @@ const SongCard = ({
             </span>
 
             {/* MENU */}
-            <div className="menu">
+            <div className="menu" ref={menuRef}>
+
               <BsThreeDots
-                onClick={() =>
-                  setShowMenu((prev) => !prev)
-                }
+                onClick={() => setShowMenu((prev) => !prev)}
               />
 
               {showMenu && (
                 <div className="menu-dropdown">
+
                   <button
                     onClick={() => {
                       onPlay?.(song);
@@ -98,9 +127,7 @@ const SongCard = ({
 
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(
-                        song?.uri || ""
-                      );
+                      navigator.clipboard.writeText(song?.uri || "");
                       alert("Song link copied!");
                       setShowMenu(false);
                     }}
@@ -118,6 +145,7 @@ const SongCard = ({
                   >
                     🔗 Open Song
                   </button>
+
                 </div>
               )}
             </div>
@@ -130,6 +158,7 @@ const SongCard = ({
             ? song.artist?.username
             : song?.artist || "Unknown Artist"}
         </p>
+
       </div>
     </div>
   );
