@@ -130,4 +130,36 @@ async function deletePlaylist(req,res){
   }
 }
 
-module.exports = {createPlaylist , getMyPlaylists , addSongToPlaylist, deletePlaylist}
+const removeSongFromPlaylist = async (req, res) => {
+  try {
+    const { playlistId, songId } = req.params;
+
+    const playlist = await Playlist.findById(playlistId);
+
+    if (!playlist) {
+      return res.status(404).json({
+        message: "Playlist not found"
+      });
+    }
+
+    playlist.songs = playlist.songs.filter(
+      song => song.toString() !== songId
+    );
+
+    await playlist.save();
+
+    res.json({
+      message: "Song removed from playlist",
+      playlist
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: "Remove song failed"
+    });
+  }
+};
+
+module.exports = {createPlaylist , getMyPlaylists , addSongToPlaylist, deletePlaylist, removeSongFromPlaylist}

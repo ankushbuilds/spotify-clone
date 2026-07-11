@@ -102,5 +102,10 @@ router.delete(
   authMiddleware.auth,
   playlistController.deletePlaylist
 )
+router.delete(
+   "/playlist/:playlistId/remove-song/:songId",
+    authMiddleware.auth,
+ playlistController.removeSongFromPlaylist
+)
 
 module.exports = router;

@@ -13,7 +13,8 @@ const Library = ({
   playlists,
   fetchPlaylists,
   addSongToPlaylist,
-  deletePlaylist
+  deletePlaylist,
+  removeSongFromPlaylist
 }) => {
   const [recentSongs, setRecentSongs] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
@@ -95,6 +96,29 @@ const Library = ({
     }));
     await fetchPlaylists();
     setSearchSong("");
+  };
+  const handleRemoveSong = async (songId) => {
+    if (!selectedPlaylist) return;
+
+    try {
+      await removeSongFromPlaylist(
+        selectedPlaylist._id,
+        songId
+      );
+
+      setSelectedPlaylist(prev => ({
+        ...prev,
+        songs: prev.songs.filter(
+          song => song._id !== songId
+        )
+      }));
+
+    } catch (error) {
+      console.log(
+        "Remove song error:",
+        error
+      );
+    }
   };
 
   const filteredSongs = recentSongs.filter(song =>
@@ -211,6 +235,12 @@ const Library = ({
                         ) || false
                       }
                     />
+                    <button
+                      className="btn btn-danger btn-sm w-100 mt-2"
+                      onClick={() => handleRemoveSong(song._id)}
+                    >
+                      <FaTrash /> Remove
+                    </button>
                   </div>
                 );
               })
