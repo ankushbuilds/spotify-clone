@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-
+import {useState,useRef,useEffect} from "react";
+import {Routes,Route,Navigate,useNavigate} from "react-router-dom";
+import apiClient from "./api/axiosClient";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Player from "./components/Player";
@@ -9,8 +9,6 @@ import Help from "./components/Help";
 import Settings from "./components/Settings";
 import Account from "./components/Account";
 import Profile from "./components/Profile";
-
-
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -19,273 +17,318 @@ import Search from "./pages/Search";
 import Library from "./pages/Library";
 import LikedSongs from "./pages/LikedSongs";
 import Album from "./pages/Album";
-import ArtistDashboard from "./pages/ArtistDashboard"
+import ArtistDashboard from "./pages/ArtistDashboard";
 
-function App() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  
+function App(){
+const [isSidebarOpen,setIsSidebarOpen]=useState(true);
 
-  // ✅ restore current song
-  const [currentSong, setCurrentSong] = useState(() => {
-    const savedSong = localStorage.getItem("currentSong");
-    return savedSong ? JSON.parse(savedSong) : null;
-  });
+const [currentSong,setCurrentSong]=useState(()=>{
+const savedSong=localStorage.getItem("currentSong");
+return savedSong?JSON.parse(savedSong):null;
+});
 
-  const [isPlaying, setIsPlaying] = useState(false);
+const [isPlaying,setIsPlaying]=useState(false);
 
-  const [likedSongs, setLikedSongs] = useState(() => {
-    const saved = localStorage.getItem("likedSongs");
-    return saved ? JSON.parse(saved) : [];
-  });
+const [likedSongs,setLikedSongs]=useState(()=>{
+const saved=localStorage.getItem("likedSongs");
+return saved?JSON.parse(saved):[];
+});
 
-  const navigate = useNavigate();
+const [playlists,setPlaylists]=useState([]);
+const [loggedIn,setLoggedIn]=useState(false);
 
-  const [loggedIn, setLoggedIn] = useState(false);
+const navigate=useNavigate();
+const audioRef=useRef(new Audio());
 
-  const audioRef = useRef(new Audio());
+useEffect(()=>{
+const token=localStorage.getItem("token");
+setLoggedIn(
+!!token&&token!=="undefined"&&token!=="null"
+);
+},[]);
 
-  // ================= AUTH =================
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    setLoggedIn(!!token && token !== "undefined" && token !== "null");
-  }, []);
+useEffect(()=>{
+localStorage.setItem(
+"likedSongs",
+JSON.stringify(likedSongs)
+);
+},[likedSongs]);
 
-  const handleLoginSuccess = () => {
-  const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "null");
-
-  setLoggedIn(!!token);
-
-  // new user login => old data clear
-  setCurrentSong(null);
-  setIsPlaying(false);
-  setLikedSongs([]);
-
-  localStorage.removeItem("currentSong");
-  localStorage.removeItem("likedSongs");
+const fetchPlaylists=async()=>{
+try{
+const res=await apiClient.get("/music/playlist/my");
+setPlaylists(res.data.playlists||[]);
+}catch(error){
+console.log("Playlist fetch error:",error);
+}
 };
 
-  // ================= PERSIST SONG =================
-  useEffect(() => {
-    if (currentSong) {
-      localStorage.setItem("currentSong", JSON.stringify(currentSong));
-    } else {
-      localStorage.removeItem("currentSong");
-    }
-  }, [currentSong]);
+useEffect(()=>{
+if(loggedIn){
+fetchPlaylists();
+}
+},[loggedIn]);
 
-  // ================= SIDEBAR =================
-  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+const handleLoginSuccess=async()=>{
+const token=localStorage.getItem("token");
 
-  // ================= LOGOUT =================
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("currentSong");
-    localStorage.removeItem("isPlaying");
-      localStorage.removeItem("likedSongs");
+setLoggedIn(!!token);
+setCurrentSong(null);
+setIsPlaying(false);
 
+const savedLikes=
+JSON.parse(localStorage.getItem("likedSongs"))||[];
 
-    audioRef.current.pause();
-    audioRef.current.src = "";
+setLikedSongs(savedLikes);
 
-    setCurrentSong(null);
-    setIsPlaying(false);
-    setLoggedIn(false);
-      setLikedSongs([]);
+localStorage.removeItem("currentSong");
 
+if(token){
+await fetchPlaylists();
+}
+};
 
-    navigate("/");
-  };
+useEffect(()=>{
+if(currentSong){
+localStorage.setItem(
+"currentSong",
+JSON.stringify(currentSong)
+);
+}else{
+localStorage.removeItem("currentSong");
+}
+},[currentSong]);
 
-  // ================= LIKE SYSTEM =================
-  const handleLike = (song) => {
-    setLikedSongs((prev) => {
-      const exists = prev.some((s) => s._id === song._id);
+const toggleSidebar=()=>{
+setIsSidebarOpen(prev=>!prev);
+};
 
-      const updated = exists
-        ? prev.filter((s) => s._id !== song._id)
-        : [...prev, song];
+const handleLogout=()=>{
+localStorage.removeItem("token");
+localStorage.removeItem("user");
+localStorage.removeItem("currentSong");
+localStorage.removeItem("isPlaying");
 
-      localStorage.setItem("likedSongs", JSON.stringify(updated));
-      return updated;
-    });
-  };
+audioRef.current.pause();
+audioRef.current.src="";
 
-  // ================= PLAY SYSTEM =================
-  const handlePlay = (song) => {
-    const audio = audioRef.current;
+setCurrentSong(null);
+setIsPlaying(false);
+setPlaylists([]);
+setLoggedIn(false);
 
-    if (currentSong?._id === song._id) {
-      if (isPlaying) {
-        audio.pause();
-        setIsPlaying(false);
-      } else {
-        audio.play().then(() => setIsPlaying(true)).catch(console.error);
-      }
-      return;
-    }
+navigate("/");
+};
 
-    audio.pause();
-    audio.src = song.uri;
-    audio.load();
+const handleLike=(song)=>{
+setLikedSongs(prev=>{
+const exists=prev.some(
+item=>item._id===song._id
+);
 
-    audio.play()
-      .then(() => {
-        setCurrentSong(song);
-        setIsPlaying(true);
-      })
-      .catch(console.error);
-  };
+if(exists){
+return prev.filter(
+item=>item._id!==song._id
+);
+}
 
-  return (
-    <div className="d-flex flex-column vh-100 bg-dark text-white">
+return [...prev,song];
+});
+};
 
-      {/* NAVBAR */}
-      <Navbar
-        toggleSidebar={toggleSidebar}
-        loggedIn={loggedIn}
-        onLogout={handleLogout}
-      />
+const addSongToPlaylist=async(playlistId,songId)=>{
+try{
+await apiClient.post(
+`/music/playlist/${playlistId}/add-song/${songId}`
+);
+alert("Song added to playlist");
+fetchPlaylists();
+}catch(error){
+console.log("Add song error:",error);
+}
+};
 
-      <div className="d-flex flex-grow-1 overflow-hidden">
+const deletePlaylist=async(id)=>{
+try{
+await apiClient.delete(
+`/music/playlist/${id}`
+);
+alert("Playlist removed");
+fetchPlaylists();
+}catch(error){
+console.log("Delete playlist error:",error);
+}
+};
 
-        {loggedIn && <Sidebar isOpen={isSidebarOpen} />}
+const handlePlay=(song)=>{
+const audio=audioRef.current;
 
-        <div className="flex-grow-1 p-4 overflow-auto bg-black">
+if(currentSong?._id===song._id){
+if(isPlaying){
+audio.pause();
+setIsPlaying(false);
+}else{
+audio.play()
+.then(()=>{
+setIsPlaying(true);
+})
+.catch(console.error);
+}
+return;
+}
 
-          <Routes>
+audio.pause();
+audio.src=song.uri;
+audio.load();
 
-            {/* HOME */}
-            <Route
-              path="/"
-              element={
-                loggedIn ? (
-                  <Home
-                    currentSong={currentSong}
-                    isPlaying={isPlaying}
-                    handlePlay={handlePlay}
-                    handleLike={handleLike}
-                  />
-                ) : (
-                  <Landing />
-                )
-              }
-            />
+audio.play()
+.then(()=>{
+setCurrentSong(song);
+setIsPlaying(true);
+})
+.catch(console.error);
+};
 
-            {/* LOGIN */}
-            <Route
-              path="/login"
-              element={
-                loggedIn ? (
-                  <Navigate to="/" />
-                ) : (
-                  <Login onLoginSuccess={handleLoginSuccess} />
-                )
-              }
-            />
-
-            {/* REGISTER */}
-            <Route
-              path="/register"
-              element={loggedIn ? <Navigate to="/" /> : <Register />}
-            />
-
-            {/* ABOUT */}
-            <Route path="/about" element={<About />} />
-            <Route path="/help" element={<Help />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/profile" element={<Profile />} />
-
-            {/* SEARCH */}
-            <Route
-              path="/search"
-              element={
-                loggedIn ? (
-                  <Search
-                    currentSong={currentSong}
-                    isPlaying={isPlaying}
-                    handlePlay={handlePlay}
-                    handleLike={handleLike}
-                  />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
-            />
-
-            {/* LIBRARY */}
-            <Route
-              path="/library"
-              element={
-                loggedIn ? <Library /> : <Navigate to="/login" />
-              }
-            />
-
-            {/* LIKED */}
-            <Route
-              path="/liked"
-              element={
-                loggedIn ? (
-                  <LikedSongs
-                    likedSongs={likedSongs}
-                    currentSong={currentSong}
-                    isPlaying={isPlaying}
-                    onPlay={handlePlay}
-                    onLike={handleLike}
-                  />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
-            />
-
-            {/* ALBUM */}
-            <Route
-              path="/album/:id"
-              element={
-                loggedIn ? (
-                  <Album
-                    audioRef={audioRef}
-                    setCurrentSong={setCurrentSong}
-                    setIsPlaying={setIsPlaying}
-                  />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
-            />
-            {/* Artist Dashboard */}
-            <Route
-  path="/artist/dashboard"
-  element={
-    loggedIn && JSON.parse(localStorage.getItem("user"))?.role === "artist"
-      ? <ArtistDashboard />
-      : <Navigate to="/" />
-  }
+return(
+<div className="d-flex flex-column vh-100 bg-dark text-white">
+<Navbar
+toggleSidebar={toggleSidebar}
+loggedIn={loggedIn}
+onLogout={handleLogout}
 />
 
-            {/* FALLBACK */}
-            <Route path="*" element={<Navigate to="/" />} />
+<div className="d-flex flex-grow-1 overflow-hidden">
 
-          </Routes>
+{loggedIn&&<Sidebar isOpen={isSidebarOpen}/>}
 
-        </div>
-      </div>
+<div className="flex-grow-1 p-4 overflow-auto bg-black">
 
-      {/* PLAYER */}
-      {loggedIn && (
-        <Player
-          currentSong={currentSong}
-          isPlaying={isPlaying}
-          setIsPlaying={setIsPlaying}
-          audioRef={audioRef}
-        />
-      )}
+<Routes>
 
-    </div>
-  );
+<Route
+path="/"
+element={
+loggedIn?
+<Home
+currentSong={currentSong}
+isPlaying={isPlaying}
+handlePlay={handlePlay}
+handleLike={handleLike}
+likedSongs={likedSongs}
+playlists={playlists}
+addSongToPlaylist={addSongToPlaylist}
+/>
+:
+<Landing/>
+}
+/>
+
+<Route
+path="/login"
+element={
+loggedIn?
+<Navigate to="/"/>
+:
+<Login onLoginSuccess={handleLoginSuccess}/>
+}
+/>
+
+<Route
+path="/liked"
+element={
+loggedIn?
+<LikedSongs
+likedSongs={likedSongs}
+onPlay={handlePlay}
+onLike={handleLike}
+/>
+:
+<Navigate to="/login"/>
+}
+/>
+
+<Route
+path="/search"
+element={
+loggedIn?
+<Search
+currentSong={currentSong}
+isPlaying={isPlaying}
+handlePlay={handlePlay}
+handleLike={handleLike}
+likedSongs={likedSongs}
+playlists={playlists}
+addSongToPlaylist={addSongToPlaylist}
+/>
+:
+<Navigate to="/login"/>
+}
+/>
+
+<Route
+path="/library"
+element={
+loggedIn?
+<Library
+likedSongs={likedSongs}
+onLike={handleLike}
+playlists={playlists}
+fetchPlaylists={fetchPlaylists}
+addSongToPlaylist={addSongToPlaylist}
+deletePlaylist={deletePlaylist}
+/>
+:
+<Navigate to="/login"/>
+}
+/>
+
+<Route path="/register" element={<Register/>}/>
+<Route path="/about" element={<About/>}/>
+<Route path="/help" element={<Help/>}/>
+<Route path="/settings" element={<Settings/>}/>
+<Route path="/account" element={<Account/>}/>
+<Route path="/profile" element={<Profile/>}/>
+
+<Route
+path="/album/:id"
+element={
+<Album
+audioRef={audioRef}
+setCurrentSong={setCurrentSong}
+setIsPlaying={setIsPlaying}
+/>
+}
+/>
+
+<Route
+path="/artist/dashboard"
+element={
+loggedIn&&JSON.parse(localStorage.getItem("user"))?.role==="artist"
+?
+<ArtistDashboard/>
+:
+<Navigate to="/"/>
+}
+/>
+
+<Route path="*" element={<Navigate to="/"/>}/>
+
+</Routes>
+
+</div>
+</div>
+
+{loggedIn&&
+<Player
+currentSong={currentSong}
+isPlaying={isPlaying}
+setIsPlaying={setIsPlaying}
+audioRef={audioRef}
+/>
+}
+
+</div>
+);
 }
 
 export default App;

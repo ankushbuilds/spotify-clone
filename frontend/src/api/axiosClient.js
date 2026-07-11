@@ -9,25 +9,25 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config) => {
-    let token = localStorage.getItem("token");
-    if (!token || token === "undefined" || token === "null") {
-      localStorage.removeItem("token");
-      token = null;
-    }
-    if (token) {
+    const token = localStorage.getItem("token");
+
+    if (token && token !== "undefined" && token !== "null") {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    return response;
+  },
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-    }
+    console.log("API Error:", error.response?.data || error.message);
     return Promise.reject(error);
   }
 );

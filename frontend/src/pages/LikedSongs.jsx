@@ -1,11 +1,10 @@
 import React from "react";
 import SongCard from "../components/SongCard";
 
-const LikedSongs = ({ likedSongs, onPlay, onLike }) => {
+const LikedSongs = ({ likedSongs = [], onPlay, onLike }) => {
   return (
     <div className="container mt-4">
       <h2 className="text-white mb-4">❤️ Liked Songs</h2>
-
       {likedSongs.length === 0 ? (
         <p className="text-secondary">No liked songs yet.</p>
       ) : (

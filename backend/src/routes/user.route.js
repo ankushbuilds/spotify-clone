@@ -16,6 +16,24 @@ router.put(
     userController.becomeArtist
 );
 
+// Deleting User
+router.delete(
+    "/delete/:id",
+    userController.deleteUser
+)
+
+// Updating User
+router.put(
+    "/update/:id",
+    userController.updateUser
+)
+
+// Updating Password
+router.put(
+    "/update-password/:id",
+    userController.updatePassword
+)
+
 
 
 module.exports = router;

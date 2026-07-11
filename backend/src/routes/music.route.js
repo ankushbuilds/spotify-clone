@@ -1,6 +1,7 @@
 const express = require("express");
 const musicController = require("../controllers/music.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
+const playlistController = require("../controllers/playlist.controller");
 const multer = require("multer");
 
 const router = express.Router();
@@ -17,12 +18,12 @@ router.post(
   authMiddleware.authArtist,
   upload.fields([
     {
-      name:"music",
-      maxCount:1
+      name: "music",
+      maxCount: 1
     },
     {
-      name:"image",
-      maxCount:1
+      name: "image",
+      maxCount: 1
     }
   ]),
   musicController.createMusic
@@ -45,8 +46,8 @@ router.get(
 );
 
 router.get(
-    "/my-songs",
-      authMiddleware.auth,
+  "/my-songs",
+  authMiddleware.auth,
   authMiddleware.authUser,
   musicController.getMyMusics
 )
@@ -73,5 +74,33 @@ router.delete(
   authMiddleware.authArtist,
   musicController.deleteMusic
 );
+// Recently played
+router.post("/recent/:songId", authMiddleware.auth, authMiddleware.authUser, musicController.addRecentlyPlayed);
+
+// Fetch Recently Played
+router.get("/recent", authMiddleware.auth, authMiddleware.authUser, musicController.getRecentlyPlayed);
+
+// Playlist
+router.post(
+  "/playlist/create",
+  authMiddleware.auth,
+  playlistController.createPlaylist
+);
+
+router.get(
+  "/playlist/my",
+  authMiddleware.auth,
+  playlistController.getMyPlaylists
+);
+router.post(
+ "/playlist/:playlistId/add-song/:songId",
+ authMiddleware.auth,
+ playlistController.addSongToPlaylist
+);
+router.delete(
+  "/playlist/:id",
+  authMiddleware.auth,
+  playlistController.deletePlaylist
+)
 
 module.exports = router;

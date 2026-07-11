@@ -7,13 +7,15 @@ const Home = ({
   isPlaying,
   handlePlay,
   handleLike,
+  likedSongs = [],
   onUnauthenticated,
+  playlists,
+  addSongToPlaylist
 }) => {
   const [songs, setSongs] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // ================= NORMALIZE =================
   const normalizeSong = (song) => ({
     _id: song._id,
     title: song.title || "Untitled",
@@ -22,11 +24,9 @@ const Home = ({
       typeof song.artist === "object"
         ? song.artist?.username
         : song.artist || "Unknown Artist",
-
     uri: song.uri || song.audioUrl || song.file || "",
   });
 
-  // ================= FETCH SONGS =================
   const fetchSongs = useCallback(async () => {
     const token = localStorage.getItem("token");
 
@@ -54,16 +54,18 @@ const Home = ({
 
       const localNormalized = localSongs.map(normalizeSong);
 
-      // ================= MERGE WITHOUT DUPLICATES =================
       const merged = [
         ...backendSongs,
         ...localNormalized.filter(
-          (ls) => !backendSongs.some((bs) => bs._id === ls._id)
-        ),
+          (ls) => !backendSongs.some(
+            (bs) => bs._id === ls._id
+          )
+        )
       ];
 
       setSongs(merged);
       setError("");
+
     } catch (err) {
       console.log("Home fetch error:", err);
 
@@ -72,25 +74,24 @@ const Home = ({
         setError("Session expired. Please log in again.");
       } else {
         setError(
-          err.response?.data?.message || "Error fetching songs."
+          err.response?.data?.message ||
+          "Error fetching songs."
         );
       }
+
     } finally {
       setLoading(false);
     }
+
   }, [onUnauthenticated]);
 
-  // ================= INITIAL LOAD =================
   useEffect(() => {
     fetchSongs();
   }, [fetchSongs]);
 
-  // ================= LIVE SYNC =================
   useEffect(() => {
     const sync = () => fetchSongs();
-
     window.addEventListener("storage", sync);
-
     return () => window.removeEventListener("storage", sync);
   }, [fetchSongs]);
 
@@ -98,38 +99,52 @@ const Home = ({
     <div>
       <h2>🎧 Welcome to Spotify Clone</h2>
 
-      {/* ERROR */}
       {error && (
-        <div className="alert alert-warning mt-3">{error}</div>
+        <div className="alert alert-warning mt-3">
+          {error}
+        </div>
       )}
 
-      {/* LOADING */}
       {loading && !error && (
         <p className="text-light mt-3">
           🎧 Loading fresh music for you...
         </p>
       )}
 
-      {/* SONG GRID */}
       <div className="row mt-3">
-        {!loading && songs.length > 0 ? (
+
+        {!loading && songs.length > 0 ?
           songs.map((song) => (
-            <div className="col-md-3 mb-4" key={song._id}>
+            <div
+              className="col-md-3 mb-4"
+              key={song._id}
+            >
+
               <SongCard
                 song={song}
                 currentSong={currentSong}
                 isPlaying={isPlaying}
                 onPlay={handlePlay}
                 onLike={handleLike}
+                isLiked={
+                  likedSongs.some(
+                    (item) => item._id === song._id
+                  )
+                }
+                playlists={playlists}
+                addSongToPlaylist={addSongToPlaylist}
               />
+
             </div>
           ))
-        ) : (
-          !loading &&
-          !error && (
-            <p className="text-light">No songs available.</p>
+          :
+          !loading && !error && (
+            <p className="text-light">
+              No songs available.
+            </p>
           )
-        )}
+        }
+
       </div>
     </div>
   );

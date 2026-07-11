@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axiosClient from "../api/axiosClient";
 
 const ArtistDashboard = () => {
@@ -10,6 +10,10 @@ const ArtistDashboard = () => {
   const [imageFile, setImageFile] = useState(null);
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const audioRef = useRef(null);
+  const imageRef = useRef(null);
 
   useEffect(() => {
     fetchSongs();
@@ -52,6 +56,7 @@ const ArtistDashboard = () => {
 
     try {
       setLoading(true);
+      setUploadProgress(0);
 
       await axiosClient.post(
         "/music/upload",
@@ -60,6 +65,15 @@ const ArtistDashboard = () => {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data"
+          },
+
+          onUploadProgress: (progressEvent) => {
+            const percent = Math.round(
+              (progressEvent.loaded * 100) /
+              progressEvent.total
+            );
+
+            setUploadProgress(percent);
           }
         }
       );
@@ -69,6 +83,14 @@ const ArtistDashboard = () => {
       setTitle("");
       setAudio(null);
       setImageFile(null);
+
+      if (audioRef.current) {
+        audioRef.current.value = "";
+      }
+
+      if (imageRef.current) {
+        imageRef.current.value = "";
+      }
 
       await fetchSongs();
 
@@ -84,6 +106,7 @@ const ArtistDashboard = () => {
 
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -139,6 +162,7 @@ const ArtistDashboard = () => {
           />
 
           <input
+            ref={audioRef}
             className="premium-input mb-2"
             type="file"
             accept="audio/*"
@@ -146,6 +170,7 @@ const ArtistDashboard = () => {
           />
 
           <input
+            ref={imageRef}
             className="premium-input mb-2"
             type="file"
             accept="image/*"
@@ -153,13 +178,38 @@ const ArtistDashboard = () => {
           />
 
           {loading && (
-            <div className="alert alert-info">
-              🎵 Uploading song, please wait...
+            <div className="mt-3">
+
+              <p className="text-info">
+                🎵 Uploading song... {uploadProgress}%
+              </p>
+
+              <div
+                style={{
+                  width:"100%",
+                  height:"12px",
+                  background:"#333",
+                  borderRadius:"10px",
+                  overflow:"hidden"
+                }}
+              >
+
+                <div
+                  style={{
+                    width:`${uploadProgress}%`,
+                    height:"100%",
+                    background:"#1db954",
+                    transition:"0.3s"
+                  }}
+                />
+
+              </div>
+
             </div>
           )}
 
           <button
-            className="premium-btn"
+            className="premium-btn mt-4"
             disabled={loading}
           >
             {loading ? "Uploading..." : "Upload Song 🎵"}
@@ -168,6 +218,7 @@ const ArtistDashboard = () => {
         </form>
 
       </div>
+
 
       <div className="mt-5">
 
@@ -179,6 +230,7 @@ const ArtistDashboard = () => {
           </p>
         )}
 
+
         {songs.map(song => (
 
           <div
@@ -189,6 +241,7 @@ const ArtistDashboard = () => {
             <div className="d-flex align-items-center gap-3">
 
               {song.image ? (
+
                 <img
                   src={song.image}
                   alt="cover"
@@ -199,7 +252,9 @@ const ArtistDashboard = () => {
                     objectFit:"cover"
                   }}
                 />
+
               ) : (
+
                 <div
                   style={{
                     width:"50px",
@@ -213,10 +268,14 @@ const ArtistDashboard = () => {
                 >
                   🎵
                 </div>
+
               )}
 
               <div>
-                <h6>{song.title}</h6>
+
+                <h6>
+                  {song.title}
+                </h6>
 
                 <small className="text-secondary">
                   {song.artist?.username || user?.username}
@@ -226,11 +285,13 @@ const ArtistDashboard = () => {
 
             </div>
 
+
             <div className="d-flex gap-3 align-items-center">
 
               <audio controls>
                 <source src={song.uri}/>
               </audio>
+
 
               <button
                 className="btn btn-danger btn-sm"
