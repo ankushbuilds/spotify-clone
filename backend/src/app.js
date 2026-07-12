@@ -11,7 +11,8 @@ const corsOptions = {
     origin: function (origin, callback) {
         const allowedOrigins = [
             "http://localhost:5173",
-            "https://spotify-clone-phi-kohl.vercel.app"
+            "https://spotify-clone-phi-kohl.vercel.app",
+            "https://spotify-clone-six-gilt-39.vercel.app"
         ];
 
         if (!origin) {
