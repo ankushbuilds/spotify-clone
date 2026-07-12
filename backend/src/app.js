@@ -18,7 +18,7 @@ const app = express();
 app.use(
     cors({
         origin: ["http://localhost:5173",
-          "https://spotify-clone-six-gamma-67.vercel.app"],
+          "https://spotify-clone-phi-kohl.vercel.app"],
         methods: [
             "GET",
             "POST",
