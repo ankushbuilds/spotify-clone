@@ -1570,3 +1570,97 @@ body {
     max-width: 130px; /* Enforces strict wrapping rules */
   }
 }
+
+/* ==========================================================================
+   ADDITIONAL RESPONSIVE TWEAKS
+   These extend and tighten behavior for intermediate and very small viewports
+   without changing any markup. Focus: nav, sidebar, cards, player, images.
+   ========================================================================== */
+
+:root {
+  --accent: #1db954;
+  --muted: #b3b3b3;
+  --card-bg: #181818;
+  --max-width: 1200px;
+}
+
+/* Large tablets / small desktops */
+@media (max-width: 1200px) {
+  .sidebar.open { width: 220px; }
+  .nav { padding: 0 16px; }
+  .song-image { height: 170px; }
+}
+
+/* Smaller laptops / tablets */
+@media (max-width: 1024px) {
+  .nav { height: 60px; }
+  .nav .logo { font-size: 16px; }
+  .sidebar.open { width: 200px; }
+  .sidebar.closed { width: 64px; }
+  .song-image { height: 150px; }
+  .playlist-icon { width: 64px; height: 64px; }
+}
+
+/* Extra mobile optimizations */
+@media (max-width: 600px) {
+  /* Hide non-essential sidebar on phones */
+  .sidebar { display: none; }
+
+  /* Make song cards compact and readable */
+  .song-card {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 10px;
+  }
+
+  .song-image {
+    width: 88px;
+    height: 88px;
+    flex: 0 0 88px;
+    border-radius: 10px;
+    object-fit: cover;
+  }
+
+  .song-info { flex: 1; min-width: 0; }
+
+  .play-btn { right: 8px; bottom: 8px; width: 48px; height: 48px; }
+
+  /* Tighter nav and header */
+  .nav { padding: 0 10px; }
+  .nav-right { gap: 6px; }
+
+  /* Music player simplified */
+  .music-player { height: 72px; grid-template-columns: 1fr 1fr; padding: 0 12px; }
+  .player-left .album-wrapper { width: 48px; height: 48px; }
+  .player-track-info h5 { font-size: 13px; }
+  .player-track-info p { font-size: 11px; }
+}
+
+/* Very small devices / narrow phones */
+@media (max-width: 375px) {
+  .nav .logo { font-size: 15px; }
+  .landing-content h1 { font-size: 24px; }
+
+  .song-card {
+    gap: 8px;
+  }
+
+  .song-image { width: 70px; height: 70px; flex: 0 0 70px; }
+
+  .player-left .album-wrapper { width: 44px; height: 44px; }
+  .player-center .play-pause-btn { width: 34px; height: 34px; font-size: 14px; }
+
+  /* Reduce padding on form cards */
+  .login-card { padding: 20px; width: 100%; }
+  .account-card, .settings-card, .premium-card { padding: 18px; }
+}
+
+/* Utility: cap main content width and center */
+.app-container, .main-container {
+  max-width: var(--max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
