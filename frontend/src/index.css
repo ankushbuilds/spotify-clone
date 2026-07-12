@@ -13,6 +13,8 @@ body {
   background: #0a0a0a;
   color: white;
   overflow-x: hidden;
+  /* Leaves structural breathing room for the sticky bottom music player */
+  padding-bottom: 90px; 
 }
 
 /* ==========================================================================
@@ -441,7 +443,7 @@ body {
 }
 
 /* ==========================================================================
-   USER PROFILE & DROPDOWN (Merged Cleanly)
+   USER PROFILE & DROPDOWN
    ========================================================================== */
 .profile-wrapper {
   position: relative;
@@ -625,7 +627,7 @@ body {
 }
 
 /* ==========================================================================
-   SONG CARDS & INTERFACES (Merged cleanly)
+   SONG CARDS & INTERFACES
    ========================================================================== */
 .card {
   background: #181818;
@@ -1290,7 +1292,146 @@ body {
 }
 
 /* ==========================================================================
-   DYNAMIC RESPONSIVENESS MEDIA QUERIES (Comprehensive Coverage)
+   GLOBAL AUDIO PLAYER BAR (Sticky Bottom Controls)
+   ========================================================================== */
+.music-player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 90px;
+  background: rgba(18, 18, 18, 0.94);
+  border-top: 1px solid #1a1a1a;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
+  padding: 0 24px;
+  z-index: 1000;
+  backdrop-filter: blur(25px);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.player-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 180px;
+}
+
+.player-left .album-wrapper {
+  width: 56px;
+  height: 56px;
+}
+
+.player-track-info h5 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #fff;
+}
+
+.player-track-info p {
+  font-size: 11px;
+  color: #b3b3b3;
+  margin: 3px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-controls {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.player-controls svg {
+  cursor: pointer;
+  color: #b3b3b3;
+  font-size: 18px;
+  transition: 0.2s;
+}
+
+.player-controls svg:hover {
+  color: white;
+}
+
+.player-controls .play-pause-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: white;
+  color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.player-controls .play-pause-btn:hover {
+  transform: scale(1.05);
+  background: #1ed760;
+}
+
+.player-timeline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 520px;
+  font-size: 11px;
+  color: #a7a7a7;
+}
+
+.player-progress-container {
+  flex: 1;
+  height: 4px;
+  background: #4f4f4f;
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+  transition: height 0.1s ease;
+}
+
+.player-progress-container:hover {
+  height: 6px;
+}
+
+.player-progress-container:hover .player-progress-bar {
+  background: #1ed760;
+}
+
+.player-progress-bar {
+  height: 100%;
+  width: 35%; /* Handled programmatically via JS */
+  background: #1db954;
+  border-radius: 2px;
+}
+
+.player-right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
+.player-right svg {
+  color: #b3b3b3;
+  font-size: 16px;
+}
+
+/* ==========================================================================
+   DYNAMIC RESPONSIVENESS MEDIA QUERIES
    ========================================================================== */
 
 /* Tablet & Intermediate Desktop Viewports */
@@ -1303,6 +1444,9 @@ body {
   }
   .sidebar.open {
     width: 200px;
+  }
+  .music-player {
+    padding: 0 16px;
   }
 }
 
@@ -1365,6 +1509,24 @@ body {
   .premium-song-item {
     gap: 10px;
   }
+
+  /* Responsive Music Player Tweaks */
+  .music-player {
+    grid-template-columns: 1fr 1fr; /* Shifts into simplified column mode */
+    height: 80px;
+  }
+
+  .player-right {
+    display: none; /* Hides peripheral volume slider widgets */
+  }
+
+  .player-center {
+    align-items: flex-end; /* Snaps control cluster into alignment bounds */
+  }
+
+  .player-timeline {
+    display: none; /* Eliminates scrub slider to optimize vertical screen height */
+  }
 }
 
 /* Small Smart Devices Viewports */
@@ -1392,5 +1554,19 @@ body {
   .profile-dropdown {
     width: 180px;
     right: -10px; /* Avoids clipping on standard edge bounds */
+  }
+
+  /* Mini Media Framework Player Scale Down */
+  .music-player {
+    grid-template-columns: 2.5fr 1fr;
+  }
+
+  .player-left .album-wrapper {
+    width: 44px;
+    height: 44px;
+  }
+
+  .player-track-info h5 {
+    max-width: 130px; /* Enforces strict wrapping rules */
   }
 }
